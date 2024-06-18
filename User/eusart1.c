@@ -106,7 +106,7 @@ void EUSART1_Initialize(void)
 
     USART_Init(USART1, &USART_InitStructure);
     // enable receive interrupt
-    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+    //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     USART1->CTLR1 |= USART_CTLR1_RXNEIE;
 
     NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
@@ -154,11 +154,11 @@ uint8_t EUSART1_Read(void)
         eusart1RxTail = 0;
     }
     //PIE3bits.RC1IE = 0;
-    USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
+    //USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
     USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_RXNEIE);
     eusart1RxCount--;
     //PIE3bits.RC1IE = 1;
-    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+    //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     USART1->CTLR1 |= (uint16_t)(USART_CTLR1_RXNEIE);
 
     return readValue;
@@ -178,7 +178,7 @@ void EUSART1_Write(uint8_t txData)
     else
     {
         //PIE3bits.TX1IE = 0;
-        USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+        //USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
         USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_TXEIE);
         eusart1TxBuffer[eusart1TxHead++] = txData;
         if(sizeof(eusart1TxBuffer) <= eusart1TxHead)
@@ -188,7 +188,7 @@ void EUSART1_Write(uint8_t txData)
         eusart1TxBufferRemaining--;
     }
     //PIE3bits.TX1IE = 1;
-    USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
+    //USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
     USART1->CTLR1 |= (uint16_t)(USART_CTLR1_TXEIE);
 }
 
@@ -231,7 +231,7 @@ void USART1_IRQHandler(void)
     else
      {
       //PIE3bits.TX1IE = 0;
-      USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+      //USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
       USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_TXEIE);
      }
   }
