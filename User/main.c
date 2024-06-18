@@ -17,6 +17,7 @@
 // PD2/AN3
 // PC4/AN2
 
+//----------------------------------------------------------------------------------
 #undef DEBUG
 //#include "debug.h"
 
@@ -25,7 +26,9 @@
 
 #define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 typedef union __attribute__((packed))
  {
   union
@@ -42,17 +45,23 @@ typedef union __attribute__((packed))
      };
    };
  } tBtn;
+ //----------------------------------------------------------------------------------
 
 
 /* Global Variable */
+ //----------------------------------------------------------------------------------
 static volatile uint32_t counter __attribute__ ((section (".no_init")));//persistent
 static uint16_t magic __attribute__ ((section (".no_init")));
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 static volatile uint8_t dma_cntr = 0;
 static volatile uint8_t dma_num = 0;
 static volatile uint8_t _100ms_flag = 0;
 static volatile uint32_t _100ms = 0;
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 void GPIO_INIT(void)
  {
   GPIO_InitTypeDef GPIO_InitStructure = {0};
@@ -90,8 +99,9 @@ void GPIO_INIT(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
  }
+//----------------------------------------------------------------------------------
 
-
+//----------------------------------------------------------------------------------
 void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void DMA1_Channel1_IRQHandler(void)
  {
@@ -102,9 +112,10 @@ void DMA1_Channel1_IRQHandler(void)
      DMA1->INTFCR = DMA_CTCIF1;
    }
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 #define ADC_NUMCHLS 4
-
 volatile uint16_t adc_buffer[ADC_NUMCHLS];
 
 /*
@@ -197,7 +208,9 @@ void adc_init(void)
   // start conversion
   ADC1->CTLR2 |= ADC_SWSTART;
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 /*
  * turn on op-amp, select input pins
  */
@@ -212,7 +225,9 @@ void opamp_init(void)
   // select op-amp neg pin: 0 = PA1, 1 = PD0
   //EXTEN->EXTEN_CTR |= EXTEN_OPA_NSEL;
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 /*********************************************************************
  * @fn      IWDG_Init
  *
@@ -239,7 +254,9 @@ void IWDG_Feed_Init(u16 prer, u16 rlr)
   IWDG_ReloadCounter();
   IWDG_Enable();
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 uint8_t Button(void)
  {
   static volatile tBtn Btn = {0};
@@ -261,7 +278,9 @@ uint8_t Button(void)
   Btn.Btn_prev = Btn.Btn_curr;
   return Btn.Btn_cnt;
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 uint8_t RButton(void)
  {
   static volatile tBtn Btn = {0};
@@ -287,7 +306,9 @@ uint8_t RButton(void)
   Btn.Btn_prev = Btn.Btn_curr;
   return ret;
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 uint8_t RButton1(void)
  {
   static volatile tBtn Btn = {0};
@@ -312,7 +333,9 @@ uint8_t RButton1(void)
   Btn.Btn_prev = Btn.Btn_curr;
   return ret;
  }
+//----------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------
 void SysTick_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
 /*********************************************************************
@@ -346,14 +369,22 @@ void SysTick_Handler(void)
   _100ms_flag = 1;
   SysTick->SR = 0;
  }
+//----------------------------------------------------------------------------------
 
 
+//----------------------------------------------------------------------------------
 /*********************************************************************
  * @fn      Option_Byte_CFG
  *
  * @brief   Config Option byte and disable reset pin.
  *
  * @return  none
+ *
+ * Bad solution. Each time it erase Option sector (including Data bytes) and
+ * flash it again. Use FlashOptionUser() and FlashOptionData() instead
+ * FlashOptionUser(0x20df);// b=0x20;((~b)&0xff)|(b<<8) RD7=GPIO
+ * FlashOptionUser(0x08f7);// b=0x08;((~b)&0xff)|(b<<8) Default value RD7=nRST
+ *
  */
 void Option_Byte_CFG(void)
 {
@@ -362,7 +393,7 @@ void Option_Byte_CFG(void)
  FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STOP_NoRST, OB_STDBY_NoRST, OB_RST_NoEN);
  FLASH_Lock();
 }
-
+//----------------------------------------------------------------------------------
 #ifndef DEBUG
 __attribute__((used))
 int _write(int fd, char *buf, int size)
@@ -371,12 +402,17 @@ int _write(int fd, char *buf, int size)
   int writeSize = size;
   for (i = 0; i < size; i++)
    {
-    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
-    USART_SendData(USART1, *buf++);
+//    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+//    USART_SendData(USART1, *buf++);
+    while(EUSART1_is_tx_ready())
+     {
+      EUSART1_Write(*buf++);
+     }
    }
   return writeSize;
  }
 
+//----------------------------------------------------------------------------------
 /*********************************************************************
  * @fn      _sbrk
  *
@@ -396,10 +432,11 @@ void *_sbrk(ptrdiff_t incr)
   curbrk += incr;
   return curbrk - incr;
  }
-
 #endif //DEBUG
+//----------------------------------------------------------------------------------
 
 
+//----------------------------------------------------------------------------------
 int main(void)
  {
   SystemCoreClockUpdate();
@@ -417,7 +454,6 @@ int main(void)
     counter = 0;
    }
   magic = 0x55aa;
-
 
   EUSART1_Initialize();
 
@@ -463,7 +499,7 @@ int main(void)
 
   while(1) //main loop
    {
-    if (EUSART1_is_rx_ready())
+    while (EUSART1_is_rx_ready()) //UART echo
      {
       char c = EUSART1_Read();
       EUSART1_Write(c);
@@ -484,4 +520,5 @@ int main(void)
      }
    }
  }
+//----------------------------------------------------------------------------------
 

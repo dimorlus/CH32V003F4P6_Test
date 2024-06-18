@@ -198,12 +198,12 @@ bool EUSART1_is_rx_ready(void);
         
         while(1)
         {
-            if(EUSART1_is_tx_ready())
+           if(EUSART1_is_tx_ready())
             {
-				LED_0_SetHigh();
-                EUSART1Write(rxData);
+		LED_0_SetHigh();
+                EUSART1_Write(rxData);
             }
-			if(EUSART1_is_tx_done()
+	   if(EUSART1_is_tx_done()
             {
                 LED_0_SetLow();
             }

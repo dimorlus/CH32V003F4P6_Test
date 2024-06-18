@@ -29,168 +29,129 @@ volatile eusart1_status_t eusart1RxLastError;
 /**
   Section: EUSART1 APIs
 */
-//void (*EUSART1_TxDefaultInterruptHandler)(void);
-//void (*EUSART1_RxDefaultInterruptHandler)(void);
-//
-//void (*EUSART1_FramingErrorHandler)(void);
-//void (*EUSART1_OverrunErrorHandler)(void);
-//void (*EUSART1_ErrorHandler)(void);
-//
-//void EUSART1_DefaultFramingErrorHandler(void);
-//void EUSART1_DefaultOverrunErrorHandler(void);
-//void EUSART1_DefaultErrorHandler(void);
 
 void EUSART1_Initialize(void)
-{
-    // disable interrupts before changing states
-    //PIE3bits.RC1IE = 0;
-    //EUSART1_SetRxInterruptHandler(EUSART1_Receive_ISR);
-    //PIE3bits.TX1IE = 0;
-    //EUSART1_SetTxInterruptHandler(EUSART1_Transmit_ISR);
-    // Set the EUSART1 module to the options selected in the user interface.
+ {
+  eusart1RxLastError.status = 0;
 
-    // ABDOVF no_overflow; SCKP Non-Inverted; BRG16 16bit_generator; WUE disabled; ABDEN disabled; 
-    //BAUD1CON = 0x08;
+  // initializing the driver state
+  eusart1TxHead = 0;
+  eusart1TxTail = 0;
+  eusart1TxBufferRemaining = sizeof(eusart1TxBuffer);
 
-    // SPEN enabled; RX9 8-bit; CREN enabled; ADDEN disabled; SREN disabled; 
-    //RC1STA = 0x90;
+  eusart1RxHead = 0;
+  eusart1RxTail = 0;
+  eusart1RxCount = 0;
 
-    // TX9 8-bit; TX9D 0; SENDB sync_break_complete; TXEN enabled; SYNC asynchronous; BRGH hi_speed; CSRC slave; 
-    //TX1STA = 0x24;
+  GPIO_InitTypeDef  GPIO_InitStructure = {0};
+  USART_InitTypeDef USART_InitStructure = {0};
+  NVIC_InitTypeDef  NVIC_InitStructure = {0};
 
-    // SP1BRGL 8; 
-    //SP1BRGL = 0x08;
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
 
-    // SP1BRGH 0; 
-    //SP1BRGH = 0x00;
+  /* USART1 TX-->D.5   RX-->D.6 */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+  USART_InitStructure.USART_BaudRate = 115200;
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  USART_InitStructure.USART_Parity = USART_Parity_No;
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 
-//    EUSART1_SetFramingErrorHandler(EUSART1_DefaultFramingErrorHandler);
-//    EUSART1_SetOverrunErrorHandler(EUSART1_DefaultOverrunErrorHandler);
-//    EUSART1_SetErrorHandler(EUSART1_DefaultErrorHandler);
+  USART_Init(USART1, &USART_InitStructure);
+  // enable receive interrupt
+  //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  USART1->CTLR1 |= USART_CTLR1_RXNEIE;
 
-    eusart1RxLastError.status = 0;
+  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);;
 
-    // initializing the driver state
-    eusart1TxHead = 0;
-    eusart1TxTail = 0;
-    eusart1TxBufferRemaining = sizeof(eusart1TxBuffer);
-
-    eusart1RxHead = 0;
-    eusart1RxTail = 0;
-    eusart1RxCount = 0;
-
-    // enable receive interrupt
-    //PIE3bits.RC1IE = 1;
-    GPIO_InitTypeDef  GPIO_InitStructure = {0};
-    USART_InitTypeDef USART_InitStructure = {0};
-    NVIC_InitTypeDef  NVIC_InitStructure = {0};
-
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
-
-    /* USART1 TX-->D.5   RX-->D.6 */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    USART_InitStructure.USART_BaudRate = 115200;
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-    USART_InitStructure.USART_StopBits = USART_StopBits_1;
-    USART_InitStructure.USART_Parity = USART_Parity_No;
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-
-    USART_Init(USART1, &USART_InitStructure);
-    // enable receive interrupt
-    //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-    USART1->CTLR1 |= USART_CTLR1_RXNEIE;
-
-    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);;
-
-    USART_Cmd(USART1, ENABLE);
-
-}
+  USART_Cmd(USART1, ENABLE);
+ }
 
 bool EUSART1_is_tx_ready(void)
-{
-    return (eusart1TxBufferRemaining ? true : false);
-}
+ {
+  return (eusart1TxBufferRemaining ? true : false);
+ }
 
 bool EUSART1_is_rx_ready(void)
-{
-    return (eusart1RxCount ? true : false);
-}
+ {
+  return (eusart1RxCount ? true : false);
+ }
 
 bool EUSART1_is_tx_done(void)
-{
-    return USART1->STATR & USART_STATR_TXE;
-}
+ {
+  return USART1->STATR & USART_STATR_TXE;
+ }
 
-eusart1_status_t EUSART1_get_last_status(void){
-    return eusart1RxLastError;
-}
+eusart1_status_t EUSART1_get_last_status(void)
+ {
+  return eusart1RxLastError;
+ }
 
 uint8_t EUSART1_Read(void)
-{
-    uint8_t readValue  = 0;
-    
-    while(0 == eusart1RxCount)
-    {
-    }
+ {
+  uint8_t readValue  = 0;
 
-    eusart1RxLastError = eusart1RxStatusBuffer[eusart1RxTail];
+  while(0 == eusart1RxCount)
+   {
+   }
 
-    readValue = eusart1RxBuffer[eusart1RxTail++];
-    if(sizeof(eusart1RxBuffer) <= eusart1RxTail)
-    {
-        eusart1RxTail = 0;
-    }
-    //PIE3bits.RC1IE = 0;
-    //USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
-    USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_RXNEIE);
-    eusart1RxCount--;
-    //PIE3bits.RC1IE = 1;
-    //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-    USART1->CTLR1 |= (uint16_t)(USART_CTLR1_RXNEIE);
+  eusart1RxLastError = eusart1RxStatusBuffer[eusart1RxTail];
 
-    return readValue;
+  readValue = eusart1RxBuffer[eusart1RxTail++];
+  if(sizeof(eusart1RxBuffer) <= eusart1RxTail)
+   {
+    eusart1RxTail = 0;
+   }
+  //PIE3bits.RC1IE = 0;
+  //USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
+  USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_RXNEIE);
+  eusart1RxCount--;
+  //PIE3bits.RC1IE = 1;
+  //USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  USART1->CTLR1 |= (uint16_t)(USART_CTLR1_RXNEIE);
+
+  return readValue;
 }
 
 void EUSART1_Write(uint8_t txData)
-{
-    while(0 == eusart1TxBufferRemaining)
-    {
-    }
+ {
+  while(0 == eusart1TxBufferRemaining)
+   {
+   }
 
-    if((USART1->CTLR1 & USART_CTLR1_TXEIE) == 0)//(0 == PIE3bits.TX1IE)
-    {
-        //TX1REG = txData;
-        USART1->DATAR = txData; //USART_SendData(USART1, txData);
-    }
-    else
-    {
-        //PIE3bits.TX1IE = 0;
-        //USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
-        USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_TXEIE);
-        eusart1TxBuffer[eusart1TxHead++] = txData;
-        if(sizeof(eusart1TxBuffer) <= eusart1TxHead)
-        {
-            eusart1TxHead = 0;
-        }
-        eusart1TxBufferRemaining--;
-    }
-    //PIE3bits.TX1IE = 1;
-    //USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
-    USART1->CTLR1 |= (uint16_t)(USART_CTLR1_TXEIE);
-}
+  if((USART1->CTLR1 & USART_CTLR1_TXEIE) == 0)//(0 == PIE3bits.TX1IE)
+   {
+    //TX1REG = txData;
+    USART1->DATAR = txData; //USART_SendData(USART1, txData);
+   }
+  else
+   {
+    //PIE3bits.TX1IE = 0;
+    //USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+    USART1->CTLR1 &= (uint16_t)(~USART_CTLR1_TXEIE);
+    eusart1TxBuffer[eusart1TxHead++] = txData;
+    if(sizeof(eusart1TxBuffer) <= eusart1TxHead)
+     {
+      eusart1TxHead = 0;
+     }
+    eusart1TxBufferRemaining--;
+   }
+  //PIE3bits.TX1IE = 1;
+  //USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
+  USART1->CTLR1 |= (uint16_t)(USART_CTLR1_TXEIE);
+ }
 
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
