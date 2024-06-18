@@ -132,6 +132,7 @@ void SystemReset_StartMode(uint32_t Mode);
 FLASH_Status FLASH_ROM_ERASE(uint32_t StartAddr, uint32_t Length);
 FLASH_Status FLASH_ROM_WRITE(uint32_t StartAddr, uint32_t *pbuf, uint32_t Length);
 void FlashOptionData(uint8_t data0, uint8_t data1);
+void FlashOptionUser(uint16_t user);
 
 #ifdef __cplusplus
 }

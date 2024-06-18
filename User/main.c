@@ -19,6 +19,8 @@
 
 #include "debug.h"
 
+
+#define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
 
 typedef union __attribute__((packed))
@@ -38,17 +40,24 @@ typedef union __attribute__((packed))
    };
  } tBtn;
 
+
 /* Global Variable */
 static volatile uint32_t counter __attribute__ ((section (".no_init")));//persistent
 static uint16_t magic __attribute__ ((section (".no_init")));
-static volatile tBtn Btn0 = {0};
+
 static volatile uint8_t dma_cntr = 0;
 static volatile uint8_t dma_num = 0;
 static volatile uint8_t _100ms_flag = 0;
+static volatile uint32_t _100ms = 0;
 
 void GPIO_INIT(void)
  {
   GPIO_InitTypeDef GPIO_InitStructure = {0};
+
+ // disable SWDIO to allow GPIO usage.
+//  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+//  GPIO_PinRemapConfig(GPIO_Remap_SDI_Disable, ENABLE);
+
 
   //AFIO->PCFR1 = AFIO_PCFR1_SWJ_CFG_DISABLE; // disable SWDIO to allow GPIO usage.
   // use  WCH-LinkUtility Target|Clear All Code Flash-By Power Off for erase FLASH
@@ -61,6 +70,12 @@ void GPIO_INIT(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+#ifdef _PD7_
+  //Button1
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //Input pulled Up
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+#endif
   //Button
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //Input pulled Up
@@ -71,24 +86,18 @@ void GPIO_INIT(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-
  }
 
 
 void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void DMA1_Channel1_IRQHandler(void)
  {
-//  dma_cntr++;
-//  GPIO_WriteBit(GPIOC, GPIO_Pin_2, (dma_cntr & 1)); // toggle DMA interrupt indicator
-//  DMA1->INTFCR = DMA1_IT_GL1;
-
   if(DMA1->INTFR & DMA1_FLAG_TC1)
    {
      dma_cntr++;
      GPIO_WriteBit(GPIOC, GPIO_Pin_2, (dma_cntr & 1)); // toggle DMA interrupt indicator
      DMA1->INTFCR = DMA_CTCIF1;
    }
-
  }
 
 #define ADC_NUMCHLS 4
@@ -128,12 +137,12 @@ void adc_init(void)
   RCC->APB2PRSTR &= ~RCC_APB2Periph_ADC1;
 
   // Set up four conversions on chl 4, 3, 2, Vref=1.2V (chl8)
-  ADC1->RSQR1 = (ADC_NUMCHLS-1) << 20;	// 3 chls in the sequence
+  ADC1->RSQR1 = (ADC_NUMCHLS-1) << 20;	// 4 chls in the sequence
   ADC1->RSQR2 = 0; //SQ7..SQ12
   ADC1->RSQR3 = (4 << (5 * 0)) | (3 << (5 * 1)) | (2 << (5 * 2)) | (8 << (5 * 3)); //SQ1..SQ6
-  //             ^         ^
-  //             |         +- index
-  //             +----------- channel
+  //             ^         ^                                        ^         ^
+  //             |         +- index=0                               |         +- index=3
+  //             +----------- channel                               +----------- Vref=1.2V (chl8)
 
   // set sampling time for chl 4, 3, 2, Vref=1.2V (chl8)
   // 0:7 => 3/9/15/30/43/57/73/241 cycles
@@ -170,7 +179,7 @@ void adc_init(void)
     DMA_DIR_PeripheralSRC |
     DMA_IT_TC; //DMA interrupt
 
-  NVIC_SetPriority(DMA1_Channel1_IRQn, (1<<7)); //We don't need to tweak priority.
+  //NVIC_SetPriority(DMA1_Channel1_IRQn, (1<<7)); //We don't need to tweak priority.
   NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
   // Turn on DMA channel 1
@@ -230,47 +239,74 @@ void IWDG_Feed_Init(u16 prer, u16 rlr)
 
 uint8_t Button(void)
  {
-  //Btn0.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
-  Btn0.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
-  switch (Btn0.Btn)
+  static volatile tBtn Btn = {0};
+  //Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
+  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
+  switch (Btn.Btn)
    {
    case 1: //press
-    Btn0.Btn_cnt = 1;
+    Btn.Btn_cnt = 1;
    break;
    case 0: //released
    case 2: //release
-    Btn0.Btn_cnt = 0;
+    Btn.Btn_cnt = 0;
    break;
    case 3: //pressed
-    if (Btn0.Btn_cnt < 63) Btn0.Btn_cnt++;
+    if (Btn.Btn_cnt < 63) Btn.Btn_cnt++;
    break;
    }
-  Btn0.Btn_prev = Btn0.Btn_curr;
-  return Btn0.Btn_cnt;
+  Btn.Btn_prev = Btn.Btn_curr;
+  return Btn.Btn_cnt;
  }
 
 uint8_t RButton(void)
  {
+  static volatile tBtn Btn = {0};
   uint8_t ret = 0;
-  //Btn0.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
-  Btn0.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
-  switch (Btn0.Btn)
+  //Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
+  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
+  switch (Btn.Btn)
    {
    case 1: //press
-    Btn0.Btn_cnt = 1;
+    Btn.Btn_cnt = 1;
    break;
    case 0: //released
-    Btn0.Btn_cnt = 0;
+    Btn.Btn_cnt = 0;
    break;
    case 2: //release
-    ret = Btn0.Btn_cnt;
-    Btn0.Btn_cnt = 0;
+    ret = Btn.Btn_cnt;
+    Btn.Btn_cnt = 0;
    break;
    case 3: //pressed
-    if (Btn0.Btn_cnt < 63) Btn0.Btn_cnt++;
+    if (Btn.Btn_cnt < 63) Btn.Btn_cnt++;
    break;
    }
-  Btn0.Btn_prev = Btn0.Btn_curr;
+  Btn.Btn_prev = Btn.Btn_curr;
+  return ret;
+ }
+
+uint8_t RButton1(void)
+ {
+  static volatile tBtn Btn = {0};
+  uint8_t ret = 0;
+  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) ? 0 : 1;
+  switch (Btn.Btn)
+   {
+   case 1: //press
+    Btn.Btn_cnt = 1;
+   break;
+   case 0: //released
+    Btn.Btn_cnt = 0;
+   break;
+   case 2: //release
+    ret = Btn.Btn_cnt;
+    Btn.Btn_cnt = 0;
+   break;
+   case 3: //pressed
+    if (Btn.Btn_cnt < 63) Btn.Btn_cnt++;
+   break;
+   }
+  Btn.Btn_prev = Btn.Btn_curr;
   return ret;
  }
 
@@ -286,6 +322,8 @@ void SysTick_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void SysTick_Handler(void)
  {
   uint8_t btn = RButton();
+  _100ms++;
+  //GPIO_WriteBit(GPIOD, GPIO_Pin_7, (_100ms & 1));
   if (btn)
    {
     if (btn < 5) counter++;
@@ -306,49 +344,39 @@ void SysTick_Handler(void)
   SysTick->SR = 0;
  }
 
-//FLASH_Unlock();
-//FLASH_EraseOptionBytes();
-//FLASH_UserOptionByteConfig(OB_STOP_NoRST, OB_STDBY_NoRST, OB_RST_NoEN, OB_PowerON_Start_Mode_USER);
-//FLASH_Unlock();
 
 /*********************************************************************
  * @fn      Option_Byte_CFG
  *
- * @brief   Config Option byte and enable reset pin.
+ * @brief   Config Option byte and disable reset pin.
  *
  * @return  none
  */
 void Option_Byte_CFG(void)
- {
-  FLASH_Unlock();
-  FLASH_EraseOptionBytes();
-//FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STDBY_NoRST, OB_RST_EN_DT12ms, OB_PowerON_Start_Mode_BOOT);
-  FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STDBY_NoRST, OB_RST_NoEN, OB_PowerON_Start_Mode_USER);
-  FLASH_Lock();
- }
+{
+ FLASH_Unlock();
+ FLASH_EraseOptionBytes();
+ FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STOP_NoRST, OB_STDBY_NoRST, OB_RST_NoEN);
+ FLASH_Lock();
+}
 
-/*********************************************************************
- * @fn      KEY_PRESS
- *
- * @brief   Key processing funcation.
- *
- * @return  0 - Press the key.
- *          1 - Release Key.
- */
 
-/*********************************************************************
- * @fn      main
- *
- * @brief   Main program.
- *
- * @return  none
- */
 int main(void)
  {
   SystemCoreClockUpdate();
   Delay_Init();
-  if (magic != 0x55aa) counter = 0;
+#ifdef _PD7_
+  FlashOptionUser(0x20df);// b=0x20;((~b)&0xff)|(b<<8) RD7=GPIO
+#else
+  FlashOptionUser(0x08f7);// b=0x08;((~b)&0xff)|(b<<8) Default value RD7=nRST
+#endif
+  if (magic != 0x55aa)
+   {
+    //Power ON reset
+    counter = 0;
+   }
   magic = 0x55aa;
+
 #if (SDI_PRINT == SDI_PR_OPEN)
   SDI_Printf_Enable();
 #else
@@ -356,6 +384,7 @@ int main(void)
 #endif
   printf("SystemClk:%d\r\n", SystemCoreClock);
   printf("ChipID:%08x\r\n", DBGMCU_GetCHIPID());
+  printf("User:%08x\n\r", *(uint32_t *)OB_BASE);
 
   uint8_t bootcnt = OB->Data0;
   bootcnt++;
@@ -366,6 +395,7 @@ int main(void)
 
   //NVIC_SetPriority(SysTicK_IRQn, (1<<6)); //We don't need to tweak priority.
   NVIC_EnableIRQ(SysTicK_IRQn);
+
   SysTick->SR &= ~(1 << 0);
   SysTick->CMP = (SystemCoreClock / 10) - 1; //100ms period
   SysTick->CNT = 0;
@@ -373,33 +403,25 @@ int main(void)
 
   IWDG_Feed_Init(IWDG_Prescaler_32, 4000);   // 1s IWDG reset
 
-      printf("\r\r\n\nadc_dma_opamp example\n\r");
+  adc_init();
 
-      // init adc
-      printf("initializing adc...");
-      adc_init();
-      printf("done.\n\r");
+// init op-amp
+// opamp_init();
 
-      // init op-amp
-//	printf("initializing op-amp...\n\r");
-//	opamp_init();
-//	printf("done.\n\r");
-
-
-  while(1)
+  while(1) //main loop
    {
-    //if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) == 1)  //PC1
+#ifdef _PD7_
+    if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == 1)  //PD7
+#endif
      {
       IWDG_ReloadCounter();   //Feed dog
-      if (_100ms_flag)
-       {
-	_100ms_flag = 0;
-         printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
-         printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
-       }
+     }
+    if (_100ms_flag)
+     {
+       _100ms_flag = 0;
+       printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
+       printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
      }
    }
-
-  //while(1);
  }
 
