@@ -17,8 +17,11 @@
 // PD2/AN3
 // PC4/AN2
 
-#include "debug.h"
+#undef DEBUG
+//#include "debug.h"
 
+#define PRINT
+#include "eusart1.h"
 
 #define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
@@ -360,11 +363,49 @@ void Option_Byte_CFG(void)
  FLASH_Lock();
 }
 
+#ifndef DEBUG
+__attribute__((used))
+int _write(int fd, char *buf, int size)
+ {
+  int i = 0;
+  int writeSize = size;
+  for (i = 0; i < size; i++)
+   {
+    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+    USART_SendData(USART1, *buf++);
+   }
+  return writeSize;
+ }
+
+/*********************************************************************
+ * @fn      _sbrk
+ *
+ * @brief   Change the spatial position of data segment.
+ *
+ * @return  size: Data length
+ */
+__attribute__((used))
+void *_sbrk(ptrdiff_t incr)
+ {
+  extern char _end[];
+  extern char _heap_end[];
+  static char *curbrk = _end;
+
+  if ((curbrk + incr < _end) || (curbrk + incr > _heap_end)) return NULL - 1;
+
+  curbrk += incr;
+  return curbrk - incr;
+ }
+
+#endif //DEBUG
+
 
 int main(void)
  {
   SystemCoreClockUpdate();
+#ifdef DEBUG
   Delay_Init();
+#endif
 #ifdef _PD7_
   FlashOptionUser(0x20df);// b=0x20;((~b)&0xff)|(b<<8) RD7=GPIO
 #else
@@ -377,20 +418,27 @@ int main(void)
    }
   magic = 0x55aa;
 
+
+  EUSART1_Initialize();
+
+#ifdef PRINT
+#ifdef DEBUG
 #if (SDI_PRINT == SDI_PR_OPEN)
   SDI_Printf_Enable();
 #else
   USART_Printf_Init(115200);
 #endif
+#endif //DEBUG
   printf("SystemClk:%d\r\n", SystemCoreClock);
   printf("ChipID:%08x\r\n", DBGMCU_GetCHIPID());
   printf("User:%08x\n\r", *(uint32_t *)OB_BASE);
-
+#endif
   uint8_t bootcnt = OB->Data0;
   bootcnt++;
   FlashOptionData(bootcnt, 0);
+#ifdef PRINT
   printf("Boot count is %d\r\n", bootcnt);
-
+#endif
   GPIO_INIT();
 
   //NVIC_SetPriority(SysTicK_IRQn, (1<<6)); //We don't need to tweak priority.
@@ -408,8 +456,18 @@ int main(void)
 // init op-amp
 // opamp_init();
 
+
+  GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
+  GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
+  GPIO_WriteBit(GPIOD, GPIO_Pin_4, (counter & 4));
+
   while(1) //main loop
    {
+    if (EUSART1_is_rx_ready())
+     {
+      char c = EUSART1_Read();
+      EUSART1_Write(c);
+     }
 #ifdef _PD7_
     if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == 1)  //PD7
 #endif
@@ -419,8 +477,10 @@ int main(void)
     if (_100ms_flag)
      {
        _100ms_flag = 0;
+#ifdef PRINT
        printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
        printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
+#endif
      }
    }
  }

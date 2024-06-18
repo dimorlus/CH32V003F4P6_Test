@@ -12,7 +12,6 @@ RM := rm -rf
 -include User/subdir.mk
 -include Startup/subdir.mk
 -include Peripheral/src/subdir.mk
--include Debug/subdir.mk
 -include Core/subdir.mk
 -include subdir.mk
 -include objects.mk
