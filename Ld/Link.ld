@@ -4,9 +4,14 @@ __stack_size = 256;
 
 PROVIDE( _stack_size = __stack_size );
 
+/* length of the first and second sector of flash */
+_EEPROM_SIZE = 64;
+/* Specify the memory areas */
+
 MEMORY
 {
-	FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 16K
+	FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 16K-_EEPROM_SIZE
+	EEPROM (rx): ORIGIN = 0x00003fc0, LENGTH = _EEPROM_SIZE 
 	RAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 2K
 }
 
@@ -94,6 +99,17 @@ SECTIONS
       KEEP (*(SORT(.dtors.*)))
       KEEP (*(.dtors))
     } >FLASH AT>FLASH 
+
+ 
+	.eesegment : 
+	{
+	  . = ALIGN(4);
+	  PROVIDE ( _eesegment_start = . );
+	  KEEP(*(.eesegment))
+	  PROVIDE ( _eesegment_end = . );
+	  . = ALIGN(4);
+	} >EEPROM
+   
 
     .dalign :
     {

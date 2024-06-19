@@ -404,10 +404,7 @@ int _write(int fd, char *buf, int size)
    {
 //    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
 //    USART_SendData(USART1, *buf++);
-    while(EUSART1_is_tx_ready())
-     {
-      EUSART1_Write(*buf++);
-     }
+    EUSART1_Write(*buf++);
    }
   return writeSize;
  }
@@ -435,8 +432,79 @@ void *_sbrk(ptrdiff_t incr)
 #endif //DEBUG
 //----------------------------------------------------------------------------------
 
-
+const uint8_t ee[64] __attribute__((section(".eesegment"))) =
+  {
+   0, 1,  2,  3,  4,  5,  6,  7,
+   8, 9, 10, 11, 12, 13, 13, 15
+  };
 //----------------------------------------------------------------------------------
+static uint8_t buf[64];
+
+void FlashTest(void)
+ {
+  FLASH_Status s;
+  printf("@EE:%08x\r\n", (uint32_t)&ee[0]);
+  {
+    int i;
+    for(i=0; i<16;i++) printf("%02x ", ee[i]);
+    printf("\r\n");
+  }
+  //uint8_t * ptr = (uint8_t*)0x08003fc0;
+  uint8_t * ptr = (uint8_t*)(0x08000000L+(uint32_t)&ee[0]);
+  {
+   printf("@PEE:%08x\r\n", (uint32_t)ptr);
+   {
+     int i;
+     for(i=0; i<16;i++) printf("%02x ", ptr[i]);
+     printf("\r\n");
+   }
+  }
+
+  {
+   int i;
+   for(i=0; i<64; i++) buf[i] = 63-(uint8_t)i;
+  }
+  printf("Erase\n\r");
+  s = FLASH_ROM_ERASE((uint32_t)ptr, 64);
+  if(s != FLASH_COMPLETE)
+  {
+      printf("check FLASH_ADR_RANGE_ERROR FLASH_ALIGN_ERROR or FLASH_OP_RANGE_ERROR\r\n");
+      return;
+  }
+  printf("@PEE:%08x\r\n", (uint32_t)ptr);
+  {
+    int i;
+    for(i=0; i<16;i++) printf("%02x ", ptr[i]);
+    printf("\r\n");
+  }
+  printf("@EE:%08x\r\n", (uint32_t)&ee[0]);
+  {
+    int i;
+    for(i=0; i<16;i++) printf("%02x ", ee[i]);
+    printf("\r\n");
+  }
+
+  printf("Write\n\r");
+  s = FLASH_ROM_WRITE((uint32_t)ptr,  (uint32_t *)buf, 64);
+  if(s != FLASH_COMPLETE)
+  {
+      printf("check FLASH_ADR_RANGE_ERROR FLASH_ALIGN_ERROR or FLASH_OP_RANGE_ERROR\r\n");
+      return;
+  }
+  printf("@EE:%08x\r\n", (uint32_t)&ee[0]);
+  {
+    int i;
+    for(i=0; i<16;i++) printf("%02x ", ee[i]);
+    printf("\r\n");
+  }
+  printf("@PEE:%08x\r\n", (uint32_t)ptr);
+  {
+    int i;
+    for(i=0; i<16;i++) printf("%02x ", ptr[i]);
+    printf("\r\n");
+  }
+
+ }
 int main(void)
  {
   SystemCoreClockUpdate();
@@ -492,10 +560,12 @@ int main(void)
 // init op-amp
 // opamp_init();
 
+  FlashTest();
 
   GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
   GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
   GPIO_WriteBit(GPIOD, GPIO_Pin_4, (counter & 4));
+
 
   while(1) //main loop
    {
