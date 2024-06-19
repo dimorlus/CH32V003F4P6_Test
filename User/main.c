@@ -431,7 +431,9 @@ void *_sbrk(ptrdiff_t incr)
  }
 #endif //DEBUG
 //----------------------------------------------------------------------------------
-
+//follow data programs to FLASH via programmer. See .eesegment definition in the Link.ld file
+//This area placed to the last 64 bytes of the FLASH memory. Address is 0x00003fc0. We have to
+//add 0x08000000 to it for FLASH API usage.
 const uint8_t ee[64] __attribute__((section(".eesegment"))) =
   {
    0, 1,  2,  3,  4,  5,  6,  7,
@@ -443,14 +445,17 @@ static uint8_t buf[64];
 void FlashTest(void)
  {
   FLASH_Status s;
+
+  //EE and ptr points physically the same area
+  const uint8_t const * ptr = (uint8_t*)(0x08000000L+(uint32_t)&ee[0]);
+
   printf("@EE:%08x\r\n", (uint32_t)&ee[0]);
   {
     int i;
     for(i=0; i<16;i++) printf("%02x ", ee[i]);
     printf("\r\n");
   }
-  //uint8_t * ptr = (uint8_t*)0x08003fc0;
-  uint8_t * ptr = (uint8_t*)(0x08000000L+(uint32_t)&ee[0]);
+
   {
    printf("@PEE:%08x\r\n", (uint32_t)ptr);
    {
@@ -460,10 +465,6 @@ void FlashTest(void)
    }
   }
 
-  {
-   int i;
-   for(i=0; i<64; i++) buf[i] = 63-(uint8_t)i;
-  }
   printf("Erase\n\r");
   s = FLASH_ROM_ERASE((uint32_t)ptr, 64);
   if(s != FLASH_COMPLETE)
@@ -482,6 +483,12 @@ void FlashTest(void)
     int i;
     for(i=0; i<16;i++) printf("%02x ", ee[i]);
     printf("\r\n");
+  }
+
+  //fill the buffer
+  {
+   int i;
+   for(i=0; i<64; i++) buf[i] = 63-(uint8_t)i;
   }
 
   printf("Write\n\r");
