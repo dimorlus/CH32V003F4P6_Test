@@ -5,17 +5,20 @@
 // ch32v00x_flash.c & ch32v00x_flash.h (void FlashOptionData(uint8_t data0, uint8_t data1) added)
 // Link.ld (section ".no_init" added)
 // Pins usage (CH32V003F4P6_MINI EVB):
-// PD6/Rx
-// PD5/Tx
-// PD4/LD3
-// PD0/LD1
-// PD1/SWIO/LD2
-// PC1/BTN
-// PA1/XTAL1
-// PA2/XTAL2
-// PD3/AN4
-// PD2/AN3
-// PC4/AN2
+// PD6/Rx               PD6/Rx
+// PD5/Tx               PD5/Tx
+// PD4/LD3   		PD4/AN7
+// PD0/LD1              PD0/LD1
+// PD1/SWIO/LD2         PD1/SWIO/LD2
+// PC1/BTN              PC1/SDA
+// PC2/LD4              PC2/SCL
+//                      PC5/LD3
+// PA1/XTAL1            PA1/XTAL1
+// PA2/XTAL2            PA2/XTAL2
+// PD3/AN4              PD3/AN4
+// PD2/AN3              PD2/AN3
+// PC4/AN2              PC4/LD4
+//                      PC3/BTN
 
 //----------------------------------------------------------------------------------
 #undef DEBUG
@@ -77,7 +80,8 @@ void GPIO_INIT(void)
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_4;// | GPIO_Pin_1;
+  // PD0/LD1
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;// | GPIO_Pin_1;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
@@ -89,28 +93,16 @@ void GPIO_INIT(void)
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 #endif
   //Button
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //Input pulled Up
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-  //DMA interrupt indicator
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  //DMA interrupt indicator LD4, LD3
+  //
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
- }
-//----------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------
-void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
-void DMA1_Channel1_IRQHandler(void)
- {
-  if(DMA1->INTFR & DMA1_FLAG_TC1)
-   {
-     dma_cntr++;
-     GPIO_WriteBit(GPIOC, GPIO_Pin_2, (dma_cntr & 1)); // toggle DMA interrupt indicator
-     DMA1->INTFCR = DMA_CTCIF1;
-   }
  }
 //----------------------------------------------------------------------------------
 
@@ -129,7 +121,7 @@ void adc_init(void)
   RCC->CFGR0 &= ~(0x1F << 11);
 
   // Enable GPIOD and ADC
-  RCC->APB2PCENR |= RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD | RCC_APB2Periph_ADC1;
+  RCC->APB2PCENR |= RCC_APB2Periph_GPIOD | RCC_APB2Periph_ADC1;
 
   // PD3 is analog input chl 4
   GPIOD->CFGLR &= ~(0xf << (4 * 3));	// CNF = 00: Analog, MODE = 00: Input
@@ -141,10 +133,10 @@ void adc_init(void)
   //                            ^
   //                            +- port pin number dma_cntr.e. PD2
 
-  // PC4 is analog input chl 2
-  GPIOC->CFGLR &= ~(0xf << (4 * 4));	// CNF = 00: Analog, MODE = 00: Input
+  // PC4 is analog input chl 7
+  GPIOD->CFGLR &= ~(0xf << (4 * 4));	// CNF = 00: Analog, MODE = 00: Input
   //                            ^
-  //                            +- port pin number dma_cntr.e. PC4
+  //                            +- port pin number dma_cntr.e. PD4
 
   // Reset the ADC to init all regs
   RCC->APB2PRSTR |= RCC_APB2Periph_ADC1;
@@ -153,14 +145,14 @@ void adc_init(void)
   // Set up four conversions on chl 4, 3, 2, Vref=1.2V (chl8)
   ADC1->RSQR1 = (ADC_NUMCHLS-1) << 20;	// 4 chls in the sequence
   ADC1->RSQR2 = 0; //SQ7..SQ12
-  ADC1->RSQR3 = (4 << (5 * 0)) | (3 << (5 * 1)) | (2 << (5 * 2)) | (8 << (5 * 3)); //SQ1..SQ6
+  ADC1->RSQR3 = (4 << (5 * 0)) | (3 << (5 * 1)) | (7 << (5 * 2)) | (8 << (5 * 3)); //SQ1..SQ6
   //             ^         ^                                        ^         ^
   //             |         +- index=0                               |         +- index=3
   //             +----------- channel                               +----------- Vref=1.2V (chl8)
 
   // set sampling time for chl 4, 3, 2, Vref=1.2V (chl8)
   // 0:7 => 3/9/15/30/43/57/73/241 cycles
-  ADC1->SAMPTR2 = (7 << (3 * 4)) | (7 << (3 * 3)) | (7 << (3 * 2)) | (7 << (3 * 8));
+  ADC1->SAMPTR2 = (7 << (3 * 4)) | (7 << (3 * 3)) | (7 << (3 * 7)) | (7 << (3 * 8));
   //               ^         ^
   //               |         +- channel
   //               +----------- 241 cycles
@@ -211,19 +203,20 @@ void adc_init(void)
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-/*
- * turn on op-amp, select input pins
- */
-void opamp_init(void)
+void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void DMA1_Channel1_IRQHandler(void)
  {
-  // turn on the op-amp
-  EXTEN->EXTEN_CTR |= EXTEN_OPA_EN;
+  if(DMA1->INTFR & DMA1_FLAG_TC1)
+   {
+     dma_cntr++;
+     GPIO_WriteBit(GPIOC, GPIO_Pin_4, (dma_cntr & 1)); // toggle DMA interrupt indicator
 
-  // select op-amp pos pin: 0 = PA2, 1 = PD7
-  //EXTEN->EXTEN_CTR |= EXTEN_OPA_PSEL;
+     TIM1->CH3CVR = 1023-adc_buffer[0]; //PC0 PWM = ADC0 (CH4/PD3)
+     TIM1->CH2CVR = 1023-adc_buffer[2]; //PC7 PWM = ADC1 (CH3/PD2)
+     TIM1->CH1CVR = 1023-adc_buffer[1];
 
-  // select op-amp neg pin: 0 = PA1, 1 = PD0
-  //EXTEN->EXTEN_CTR |= EXTEN_OPA_NSEL;
+     DMA1->INTFCR = DMA_CTCIF1;
+   }
  }
 //----------------------------------------------------------------------------------
 
@@ -257,11 +250,178 @@ void IWDG_Feed_Init(u16 prer, u16 rlr)
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
+/*
+ * initialize TIM1 for PWM
+ */
+#define GPIO_CNF_IN_ANALOG   0
+#define GPIO_CNF_IN_FLOATING 4
+#define GPIO_CNF_IN_PUPD     8
+#define GPIO_CNF_OUT_PP      0
+#define GPIO_CNF_OUT_OD      4
+#define GPIO_CNF_OUT_PP_AF   8
+#define GPIO_CNF_OUT_OD_AF   12
+
+//----------------------------------------------------------------------------------
+///******************************************************************************************
+// * initialize TIM2 for PWM
+// Timer 2 pin mappings by AFIO->PCFR1
+//	00	AFIO_PCFR1_TIM2_REMAP_NOREMAP
+//		D4		T2CH1ETR
+//		D3		T2CH2
+//		C0		T2CH3
+//		D7		T2CH4  --note: requires disabling nRST in opt
+//	01	AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP1
+//		C5		T2CH1ETR_
+//		C2		T2CH2_
+//		D2		T2CH3_
+//		C1		T2CH4_
+//	10	AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP2
+//		C1		T2CH1ETR_
+//		D3		T2CH2
+//		C0		T2CH3
+//		D7		T2CH4  --note: requires disabling nRST in opt
+//	11	AFIO_PCFR1_TIM2_REMAP_FULLREMAP
+//		C1		T2CH1ETR_
+//		C7		T2CH2_
+//		D6		T2CH3_
+//		D5		T2CH4_
+// ******************************************************************************************/
+//void t2pwm_init( void )
+//{
+//  // Enable GPIOC, GPIOD, TIM2, and AFIO *very important!*
+//  RCC->APB2PCENR |= RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC;
+//  RCC->APB1PCENR |= RCC_APB1Periph_TIM2;
+//
+//  // PC5 is T2CH1_, 10MHz Output alt func, push-pull (also works in oepn drain OD_AF)
+//  GPIOC->CFGLR &= ~(0xf<<(4*5));
+//  GPIOC->CFGLR |= (GPIO_Speed_30MHz | GPIO_CNF_OUT_PP_AF)<<(4*5);
+//
+//  // Reset TIM2 to init all regs
+//  RCC->APB1PRSTR |= RCC_APB1Periph_TIM2;
+//  RCC->APB1PRSTR &= ~RCC_APB1Periph_TIM2;
+//
+//  // SMCFGR: default clk input is CK_INT
+//  // set TIM2 clock prescaler divider
+//  TIM2->PSC = 0x0000;
+//  // set PWM total cycle width
+//  TIM2->ATRLR = 1023; //10bit (255 - 8bit);
+//
+//  // for channel 1 and 2, let CCxS stay 00 (output), set OCxM to 110 (PWM I)
+//  // enabling preload causes the new pulse width in compare capture register only to come into effect when UG bit in SWEVGR is set (= initiate update) (auto-clears)
+//  TIM2->CHCTLR1 |= TIM_OC1M_2 | TIM_OC1M_1 | TIM_OC1PE;
+// // TIM2->CHCTLR1 |= TIM_OC2M_2 | TIM_OC2M_1 | TIM_OC2PE;
+//
+//  // CTLR1: default is up, events generated, edge align
+//  // enable auto-reload of preload
+//  TIM2->CTLR1 |= TIM_ARPE;
+//
+//  // Enable CH1 output, positive pol
+//  TIM2->CCER |= TIM_CC1E | TIM_CC1P;
+//  // Enable CH2 output, positive pol
+//  //TIM2->CCER |= TIM_CC2E | TIM_CC2P;
+//
+//  AFIO->PCFR1 |= AFIO_PCFR1_TIM2_REMAP_FULLREMAP;
+//  // initialize counter
+//  TIM2->SWEVGR |= TIM_UG;
+//
+//  // Enable TIM2
+//  TIM2->CTLR1 |= TIM_CEN;
+//}
+////----------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------
+void t1pwm_init( void )
+{
+  // Enable GPIOC and TIM1 and AFIO *very important!*
+  RCC->APB2PCENR |= RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC | RCC_APB2Periph_TIM1;
+
+  // PC0 is T1CH3, 30MHz Output alt func, push-pull
+  GPIOC->CFGLR &= ~(0xf<<(4*0));
+  GPIOC->CFGLR |= (GPIO_Speed_30MHz | GPIO_CNF_OUT_PP_AF)<<(4*0);
+
+  // PC7 is T1CH2, 30MHz Output alt func, push-pull
+  GPIOC->CFGLR &= ~(0xf<<(4*7));
+  GPIOC->CFGLR |= (GPIO_Speed_30MHz | GPIO_CNF_OUT_PP_AF)<<(4*7);
+
+  // PC6 is T1CH1, 30MHz Output alt func, push-pull
+  GPIOC->CFGLR &= ~(0xf<<(4*6));
+  GPIOC->CFGLR |= (GPIO_Speed_30MHz | GPIO_CNF_OUT_PP_AF)<<(4*6);
+
+
+  // Reset TIM1 to init all regs
+  RCC->APB2PRSTR |= RCC_APB2Periph_TIM1;
+  RCC->APB2PRSTR &= ~RCC_APB2Periph_TIM1;
+
+  // CTLR1: default is up, events generated, edge align
+  // SMCFGR: default clk input is CK_INT
+
+  // Prescaler
+  TIM1->PSC = 0x0000;
+
+  // Auto Reload - sets period
+  TIM1->ATRLR = 1023;//10bit (255 - 8bit);
+
+  // Reload immediately
+  TIM1->SWEVGR |= TIM_UG;
+
+  // Enable CH1 output, positive pol
+  TIM1->CCER |= TIM_CC1E | TIM_CC1P;
+
+  // Enable CH2 output, positive pol
+  TIM1->CCER |= TIM_CC2E | TIM_CC2P;
+
+  // Enable CH3 output, positive pol
+  TIM1->CCER |= TIM_CC3E | TIM_CC3P;
+
+  // CH1 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
+  TIM1->CHCTLR1 |= TIM_OC1M_2 | TIM_OC1M_1;
+
+  // CH2 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
+  TIM1->CHCTLR1 |= TIM_OC2M_2 | TIM_OC2M_1;
+
+  // CH3 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
+  TIM1->CHCTLR2 |= TIM_OC3M_2 | TIM_OC3M_1;
+
+  // Set the Capture Compare Register value to 50% initially
+  TIM1->CH1CVR = 512;
+  TIM1->CH4CVR = 512;
+  TIM1->CH2CVR = 512;
+  TIM1->CH3CVR = 512;
+
+  // Enable TIM1 outputs
+  TIM1->BDTR |= TIM_MOE;
+
+  AFIO->PCFR1 |= AFIO_PCFR1_TIM1_REMAP_PARTIALREMAP; //RM=01
+
+  // Enable TIM1
+  TIM1->CTLR1 |= TIM_CEN;
+}
+//----------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------
+/*
+ * set timer channel PW
+ */
+void t1pwm_setpw(uint8_t chl, uint16_t width)
+ {
+  switch(chl&3)
+   {
+    case 0: TIM1->CH1CVR = width; break;
+    case 1: TIM1->CH2CVR = width; break;
+    case 2: TIM1->CH3CVR = width; break;
+    case 3: TIM1->CH4CVR = width; break;
+   }
+ }
+//----------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------
 uint8_t Button(void)
  {
   static volatile tBtn Btn = {0};
   //Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
-  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
+  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_3) ? 0 : 1;
   switch (Btn.Btn)
    {
    case 1: //press
@@ -286,7 +446,7 @@ uint8_t RButton(void)
   static volatile tBtn Btn = {0};
   uint8_t ret = 0;
   //Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
-  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1) ? 0 : 1;
+  Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_3) ? 0 : 1;
   switch (Btn.Btn)
    {
    case 1: //press
@@ -356,7 +516,7 @@ void SysTick_Handler(void)
 
     GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
     GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
-    GPIO_WriteBit(GPIOD, GPIO_Pin_4, (counter & 4));
+    GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
 
 
     //printf("Systick %d %d\r\n", btn, counter);
@@ -514,6 +674,8 @@ void FlashTest(void)
  }
 int main(void)
  {
+  uint32_t count = 0;
+
   SystemCoreClockUpdate();
 #ifdef DEBUG
   Delay_Init();
@@ -531,6 +693,8 @@ int main(void)
   magic = 0x55aa;
 
   EUSART1_Initialize();
+
+  // init TIM1 for PWM
 
 #ifdef PRINT
 #ifdef DEBUG
@@ -569,9 +733,11 @@ int main(void)
 
   FlashTest();
 
+  t1pwm_init();
+
   GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
   GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
-  GPIO_WriteBit(GPIOD, GPIO_Pin_4, (counter & 4));
+  GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
 
 
   while(1) //main loop
@@ -594,6 +760,12 @@ int main(void)
        printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
        printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
 #endif
+//	t1pwm_setpw(2, count); // Chl 1
+//	t1pwm_setpw(1, (count + 512)&1023);	// Chl 4
+	count++;
+	count &= 1023;
+//	TIM1->CH3CVR = count & 1023;
+//	TIM1->CH2CVR = (1023 - count) & 1023;
      }
    }
  }
