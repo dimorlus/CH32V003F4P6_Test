@@ -28,7 +28,7 @@ Pins usage (CH32V003F4P6_MINI EVB):
 - PC6/PWM/LD6
 - PC0/PWM/LD7
 
-![](D:\Projects\LED\Alex\CH32V003\Test\Schematic\sch.png)
+![](Schematic\sch.png)
 
 At start, the program prints the **Clock frequency**, **Chip ID**, **User Options** (determ the **PD7** usage), the number of reboots stored in the **User Options** area and then performs a series of erases and writes to flash memory. At the first start, there is an array specified in the program from 00 to 0f. Next, the specified sector (64 bytes) is erased and data from 3f down to 00 is written there. At the next start, they will be read.
 
