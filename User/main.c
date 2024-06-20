@@ -1,6 +1,3 @@
-// This MounRiver project example shows SysTick interrupt, GPIO, A2D&DMA, DMA interrupt, button reading,
-// Option area flash, persistent (non initialize) variables, Watchdog, UART debug printf and
-// PD1/SWIO as GPIO usage (commented in void GPIO_INIT(void)).
 // The following files are modified:
 // ch32v00x_flash.c & ch32v00x_flash.h (void FlashOptionData(uint8_t data0, uint8_t data1) added)
 // Link.ld (section ".no_init" added)
@@ -19,6 +16,9 @@
 // PD2/AN3              PD2/AN3
 // PC4/AN2              PC4/LD4
 //                      PC3/BTN
+//                      PC0/PWM/LD7
+//                      PC6/PWM/LD6
+//                      PC7/PWM/LD5
 
 //----------------------------------------------------------------------------------
 #undef DEBUG
