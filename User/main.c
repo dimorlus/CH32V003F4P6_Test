@@ -2,23 +2,23 @@
 // ch32v00x_flash.c & ch32v00x_flash.h (void FlashOptionData(uint8_t data0, uint8_t data1) added)
 // Link.ld (section ".no_init" added)
 // Pins usage (CH32V003F4P6_MINI EVB):
-// PD6/Rx               PD6/Rx
-// PD5/Tx               PD5/Tx
-// PD4/LD3   		PD4/AN7
-// PD0/LD1              PD0/LD1
-// PD1/SWIO/LD2         PD1/SWIO/LD2
-// PC1/BTN              PC1/SDA
-// PC2/LD4              PC2/SCL
-//                      PC5/LD3
-// PA1/XTAL1            PA1/XTAL1
-// PA2/XTAL2            PA2/XTAL2
-// PD3/AN4              PD3/AN4
-// PD2/AN3              PD2/AN3
-// PC4/AN2              PC4/LD4
-//                      PC3/BTN
-//                      PC0/PWM/LD7
-//                      PC6/PWM/LD6
-//                      PC7/PWM/LD5
+// PD6/Rx
+// PD5/Tx
+// PD4/AN7
+// PD0/LD1
+// PD1/SWIO/LD2
+// PC1/SDA
+// PC2/SCL
+// PC5/LD3
+// PA1/XTAL1
+// PA2/XTAL2
+// PD3/AN4
+// PD2/AN3
+// PC4/LD4
+// PC3/BTN
+// PC0/PWM/LD7
+// PC6/PWM/LD6
+// PC7/PWM/LD5
 
 //----------------------------------------------------------------------------------
 #undef DEBUG
