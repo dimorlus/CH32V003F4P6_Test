@@ -29,6 +29,7 @@
 
 #define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
+#define DELTA_ADC 20
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
@@ -591,6 +592,17 @@ void *_sbrk(ptrdiff_t incr)
  }
 #endif //DEBUG
 //----------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
+inline uint8_t delta(uint32_t v1, uint32_t v2) __attribute__((always_inline));
+uint8_t delta(uint32_t v1, uint32_t v2)
+ {
+  uint32_t ret;
+  ret = v1>v2?v1-v2:v2-v1;
+  if (ret > 255) return 255;
+  else return ret & 0xff;
+ }
+//----------------------------------------------------------------------------------
 //follow data programs to FLASH via programmer. See .eesegment definition in the Link.ld file
 //This area placed to the last 64 bytes of the FLASH memory. Address is 0x00003fc0. We have to
 //add 0x08000000 to it for FLASH API usage.
@@ -670,12 +682,12 @@ void FlashTest(void)
     for(i=0; i<16;i++) printf("%02x ", ptr[i]);
     printf("\r\n");
   }
-
  }
+//----------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------
 int main(void)
  {
-  uint32_t count = 0;
-
   SystemCoreClockUpdate();
 #ifdef DEBUG
   Delay_Init();
@@ -739,35 +751,39 @@ int main(void)
   GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
   GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
 
-
-  while(1) //main loop
-   {
-    while (EUSART1_is_rx_ready()) //UART echo
-     {
-      char c = EUSART1_Read();
-      EUSART1_Write(c);
-     }
-#ifdef _PD7_
-    if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == 1)  //PD7
-#endif
-     {
-      IWDG_ReloadCounter();   //Feed dog
-     }
-    if (_100ms_flag)
-     {
-       _100ms_flag = 0;
-#ifdef PRINT
-       printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
-       printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
-#endif
-//	t1pwm_setpw(2, count); // Chl 1
-//	t1pwm_setpw(1, (count + 512)&1023);	// Chl 4
-	count++;
-	count &= 1023;
-//	TIM1->CH3CVR = count & 1023;
-//	TIM1->CH2CVR = (1023 - count) & 1023;
-     }
-   }
+  {
+   uint16_t adc_buffer_prev[ADC_NUMCHLS] = {0};
+   while(1) //main loop
+    {
+     while (EUSART1_is_rx_ready()) //UART echo
+      {
+       char c = EUSART1_Read();
+       EUSART1_Write(c);
+      }
+ #ifdef _PD7_
+     if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == 1)  //PD7
+ #endif
+      {
+       IWDG_ReloadCounter();   //Feed dog
+      }
+     if (_100ms_flag)
+      {
+	_100ms_flag = 0;
+ #ifdef PRINT
+	if ((delta(adc_buffer_prev[0], adc_buffer[0]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[1], adc_buffer[1]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[2], adc_buffer[2]) > DELTA_ADC))
+	 { //print if changed
+	  printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
+	  printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
+	 }
+	adc_buffer_prev[0] = adc_buffer[0];
+	adc_buffer_prev[1] = adc_buffer[1];
+	adc_buffer_prev[2] = adc_buffer[2];
+ #endif
+      }
+    }
+  }
  }
 //----------------------------------------------------------------------------------
 

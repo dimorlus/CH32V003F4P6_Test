@@ -58,7 +58,7 @@ Test.hex: Test.elf
 	@	riscv-none-embed-objcopy -O ihex "Test.elf"  "Test.hex"
 	@	@
 Test.lst: Test.elf
-	@	riscv-none-embed-objdump --all-headers --demangle --disassemble -M xw "Test.elf" > "Test.lst"
+	@	riscv-none-embed-objdump --source --all-headers --demangle --disassemble -M xw "Test.elf" > "Test.lst"
 	@	@
 Test.siz: Test.elf
 	@	riscv-none-embed-size --format=berkeley "Test.elf"
