@@ -210,8 +210,11 @@ static void adc_init(void)
 
 //----------------------------------------------------------------------------------
 //low pass filters
+#ifndef PRINT_ADC
 static volatile uint16_t adc_avg[ADC_NUMCHLS] = {0};
 static volatile uint16_t adc_mean[ADC_NUMCHLS] = {0};
+#endif
+#ifdef PRINT_AVG
 static inline uint16_t avg(int idx)
 {
  /* low pass filter */
@@ -220,8 +223,10 @@ static inline uint16_t avg(int idx)
  adc_avg[idx] += ii;
  return adc_avg[idx];
 }
+#endif
 
 //moving mean
+#ifdef PRINT_MEAN
 static inline uint16_t mean(int idx)
 {
  adc_avg[idx]-=adc_avg[idx]/16;
@@ -229,7 +234,7 @@ static inline uint16_t mean(int idx)
 
  return adc_mean[idx]=adc_avg[idx]/16;
 }
-
+#endif
 //----------------------------------------------------------------------------------
 
 
@@ -305,75 +310,6 @@ static void IWDG_Feed_Init(u16 prer, u16 rlr)
 #define GPIO_CNF_OUT_OD_AF   12
 
 //----------------------------------------------------------------------------------
-///******************************************************************************************
-// * initialize TIM2 for PWM
-// Timer 2 pin mappings by AFIO->PCFR1
-//	00	AFIO_PCFR1_TIM2_REMAP_NOREMAP
-//		D4		T2CH1ETR
-//		D3		T2CH2
-//		C0		T2CH3
-//		D7		T2CH4  --note: requires disabling nRST in opt
-//	01	AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP1
-//		C5		T2CH1ETR_
-//		C2		T2CH2_
-//		D2		T2CH3_
-//		C1		T2CH4_
-//	10	AFIO_PCFR1_TIM2_REMAP_PARTIALREMAP2
-//		C1		T2CH1ETR_
-//		D3		T2CH2
-//		C0		T2CH3
-//		D7		T2CH4  --note: requires disabling nRST in opt
-//	11	AFIO_PCFR1_TIM2_REMAP_FULLREMAP
-//		C1		T2CH1ETR_
-//		C7		T2CH2_
-//		D6		T2CH3_
-//		D5		T2CH4_
-// ******************************************************************************************/
-//void t2pwm_init( void )
-//{
-//  // Enable GPIOC, GPIOD, TIM2, and AFIO *very important!*
-//  RCC->APB2PCENR |= RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC;
-//  RCC->APB1PCENR |= RCC_APB1Periph_TIM2;
-//
-//  // PC5 is T2CH1_, 10MHz Output alt func, push-pull (also works in oepn drain OD_AF)
-//  GPIOC->CFGLR &= ~(0xf<<(4*5));
-//  GPIOC->CFGLR |= (GPIO_Speed_30MHz | GPIO_CNF_OUT_PP_AF)<<(4*5);
-//
-//  // Reset TIM2 to init all regs
-//  RCC->APB1PRSTR |= RCC_APB1Periph_TIM2;
-//  RCC->APB1PRSTR &= ~RCC_APB1Periph_TIM2;
-//
-//  // SMCFGR: default clk input is CK_INT
-//  // set TIM2 clock prescaler divider
-//  TIM2->PSC = 0x0000;
-//  // set PWM total cycle width
-//  TIM2->ATRLR = 1023; //10bit (255 - 8bit);
-//
-//  // for channel 1 and 2, let CCxS stay 00 (output), set OCxM to 110 (PWM I)
-//  // enabling preload causes the new pulse width in compare capture register only to come into effect when UG bit in SWEVGR is set (= initiate update) (auto-clears)
-//  TIM2->CHCTLR1 |= TIM_OC1M_2 | TIM_OC1M_1 | TIM_OC1PE;
-// // TIM2->CHCTLR1 |= TIM_OC2M_2 | TIM_OC2M_1 | TIM_OC2PE;
-//
-//  // CTLR1: default is up, events generated, edge align
-//  // enable auto-reload of preload
-//  TIM2->CTLR1 |= TIM_ARPE;
-//
-//  // Enable CH1 output, positive pol
-//  TIM2->CCER |= TIM_CC1E | TIM_CC1P;
-//  // Enable CH2 output, positive pol
-//  //TIM2->CCER |= TIM_CC2E | TIM_CC2P;
-//
-//  AFIO->PCFR1 |= AFIO_PCFR1_TIM2_REMAP_FULLREMAP;
-//  // initialize counter
-//  TIM2->SWEVGR |= TIM_UG;
-//
-//  // Enable TIM2
-//  TIM2->CTLR1 |= TIM_CEN;
-//}
-////----------------------------------------------------------------------------------
-
-
-//----------------------------------------------------------------------------------
 static void t1pwm_init(void)
 {
   // Enable GPIOC and TIM1 and AFIO *very important!*
@@ -441,23 +377,6 @@ static void t1pwm_init(void)
   TIM1->CTLR1 |= TIM_CEN;
 }
 //----------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------
-/*
- * set timer channel PW
- */
-//static void t1pwm_setpw(uint8_t chl, uint16_t width)
-// {
-//  switch(chl&3)
-//   {
-//    case 0: TIM1->CH1CVR = width; break;
-//    case 1: TIM1->CH2CVR = width; break;
-//    case 2: TIM1->CH3CVR = width; break;
-//    case 3: TIM1->CH4CVR = width; break;
-//   }
-// }
-//----------------------------------------------------------------------------------
-
 
 //----------------------------------------------------------------------------------
 static inline uint8_t Button(void)
@@ -560,8 +479,6 @@ void SysTick_Handler(void)
     GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
     GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
     GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
-
-
     //printf("Systick %d %d\r\n", btn, counter);
    }
 
@@ -647,7 +564,7 @@ static inline uint8_t delta(uint32_t v1, uint32_t v2)
 //----------------------------------------------------------------------------------
 //follow data programs to FLASH via programmer. See .eesegment definition in the Link.ld file
 //This area placed to the last 64 bytes of the FLASH memory. Address is 0x00003fc0. We have to
-//add 0x08000000 to it for FLASH API usage.
+//add 0x08000000 (FLASH_BASE) to it for FLASH API usage.
 const uint8_t ee[64] __attribute__((section(".eesegment"))) =
   {
    0, 1,  2,  3,  4,  5,  6,  7,
@@ -661,7 +578,7 @@ static void FlashTest(void)
   FLASH_Status s;
 
   //EE and ptr points physically the same area
-  const uint8_t const * ptr = (uint8_t*)(0x08000000L+(uint32_t)&ee[0]);
+  const uint8_t const * ptr = (uint8_t*)(FLASH_BASE+(uint32_t)&ee[0]);
 
   printf("@EE:%08x\r\n", (uint32_t)&ee[0]);
   {
@@ -748,8 +665,6 @@ int main(void)
 
   EUSART1_Initialize();
 
-  // init TIM1 for PWM
-
 #ifdef PRINT
 #ifdef DEBUG
 #if (SDI_PRINT == SDI_PR_OPEN)
@@ -769,6 +684,9 @@ int main(void)
   printf("Boot count is %d\r\n", bootcnt);
 #endif
   GPIO_INIT();
+  GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
+  GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
+  GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
 
   //NVIC_SetPriority(SysTicK_IRQn, (1<<6)); //We don't need to tweak priority.
   NVIC_EnableIRQ(SysTicK_IRQn);
@@ -778,21 +696,14 @@ int main(void)
   SysTick->CNT = 0;
   SysTick->CTLR = 0xF;
 
+  //init watchdog
   IWDG_Feed_Init(IWDG_Prescaler_32, 4000);   // 1s IWDG reset
-
+  //init ADC
   adc_init();
-
-// init op-amp
-// opamp_init();
-
-  FlashTest();
-
+  // init TIM1 for PWM
   t1pwm_init();
 
-  GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
-  GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
-  GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
-
+  FlashTest();
   {
    uint16_t adc_buffer_prev[ADC_NUMCHLS] = {0};
    while(1) //main loop

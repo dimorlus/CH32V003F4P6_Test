@@ -1,14 +1,14 @@
 # CH32V003 test
 
-This [MounRiver](http://www.mounriver.com/) project example shows **SysTick** interrupt, **GPIO**, **ADC**&**DMA**, DMA interrupt, **PWM**, button reading, **Option** area flash, **persistent** (non initialize) variables, **Watchdog**, **UART** cyclic buffered IO with *printf*, **FLASH** memory for user data and **PD1/SWIO** as GPIO usage (commented in `void GPIO_INIT(void)`).
+This [MounRiver](http://www.mounriver.com/) project example shows **SysTick** interrupt, **GPIO**, **ADC**&**DMA**, DMA interrupt, **PWM**, button reading, **Option** area flash, **persistent** (non initialize) variables, **Watchdog**, **UART** cyclic buffered IO with *printf*, **FLASH** memory for user data and **PD7/nRST**&**PD1/SWIO** as *GPIO* usage (commented in `void GPIO_INIT(void)`).
 
 The following files are modified:  
 
 - *ch32v00x_flash.c* & *ch32v00x_flash.h* (`void FlashOptionData(uint8_t data0, uint8_t data1);` and `void FlashOptionUser(uint16_t user);` added).
 
-- ch32v00x_gpio.c & ch32v00x_gpio.h (bit manipulation functions declared as **inline**)
+- ch32v00x_gpio.c & ch32v00x_gpio.h (bit manipulation functions declared as **inline**).
 
-- *Link.ld* (sections "**.no_init**" and **".eesegment"** added).
+- *Link.ld* (sections "**.no_init**" and "**.eesegment**" added).
 
 Pins usage (CH32V003F4P6_MINI EVB):
 
