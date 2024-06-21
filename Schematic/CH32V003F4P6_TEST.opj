@@ -1,0 +1,43 @@
+(ExpressProject ""
+  (ProjectVersion "19981106")
+  (ProjectType "PCB")
+  (Folder "Design Resources"
+    (Folder "Library")
+    (File ".\ch32v003f4p6_test.dsn"
+      (Type "Schematic Design"))
+    (BuildFileAddedOrDeleted "x")
+    (CompileFileAddedOrDeleted "x")
+    (ANNOTATE_Scope "0")
+    (ANNOTATE_Mode "1")
+    (ANNOTATE_Action "1")
+    (ANNOTATE_Reset_References_to_1 "FALSE")
+    (ANNOTATE_No_Page_Number_Change "FALSE")
+    (ANNOTATE_Property_Combine "{Value}{Source Package}")
+    (NoModify))
+  (Folder "Outputs")
+  (Folder "Referenced Projects")
+  (PartMRUSelector)
+  (GlobalState
+    (FileView
+      (Path "Design Resources")
+      (Path "Design Resources" ".\ch32v003f4p6_test.dsn")
+      (Path "Design Resources" ".\ch32v003f4p6_test.dsn" "CH32V003F4P6_TEST")
+      (Select "Design Resources" ".\ch32v003f4p6_test.dsn" "CH32V003F4P6_TEST"
+         "CH32V003F4P6_TEST"))
+    (HierarchyView)
+    (Doc
+      (Type "COrCapturePMDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -9 -38 0 200 0 597"))
+      (Tab 0))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 2 3 -1 -1 -9 -38 0 1632 0 644")
+        (Scroll "0 0")
+        (Zoom "113")
+        (Occurrence "/"))
+      (Path
+         "D:\PROJECTS\LED\ALEX\CH32V003\TEST\SCHEMATIC\CH32V003F4P6_TEST.DSN")
+      (Schematic "CH32V003F4P6_TEST")
+      (Page "CH32V003F4P6_TEST"))))
