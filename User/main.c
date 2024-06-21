@@ -25,11 +25,16 @@
 //#include "debug.h"
 
 #define PRINT
+//#define PRINT_ADC
+//#define PRINT_AVG
+#define PRINT_MEAN
+
 #include "eusart1.h"
 
 #define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
-#define DELTA_ADC 20
+//#define DELTA_ADC 20
+#define DELTA_ADC 3
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
@@ -59,14 +64,14 @@ static uint16_t magic __attribute__ ((section (".no_init")));
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-static volatile uint8_t dma_cntr = 0;
-static volatile uint8_t dma_num = 0;
-static volatile uint8_t _100ms_flag = 0;
+static volatile uint32_t dma_cntr = 0;
+static volatile uint32_t dma_num = 0;
+static volatile bool _100ms_flag = 0;
 static volatile uint32_t _100ms = 0;
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-void GPIO_INIT(void)
+static void GPIO_INIT(void)
  {
   GPIO_InitTypeDef GPIO_InitStructure = {0};
 
@@ -109,14 +114,14 @@ void GPIO_INIT(void)
 
 //----------------------------------------------------------------------------------
 #define ADC_NUMCHLS 4
-volatile uint16_t adc_buffer[ADC_NUMCHLS];
+static volatile uint16_t adc_buffer[ADC_NUMCHLS];
 
 /*
  * initialize adc for DMA
  * D3/A4, D2/A3, C4/A2, A8
  */
 
-void adc_init(void)
+static void adc_init(void)
  {
   // ADCCLK = 24 MHz => RCC_ADCPRE = 0: divide by 2
   RCC->CFGR0 &= ~(0x1F << 11);
@@ -204,6 +209,31 @@ void adc_init(void)
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
+//low pass filters
+static volatile uint16_t adc_avg[ADC_NUMCHLS] = {0};
+static volatile uint16_t adc_mean[ADC_NUMCHLS] = {0};
+static inline uint16_t avg(int idx)
+{
+ /* low pass filter */
+ int32_t ii = (int32_t)(adc_buffer[idx] - adc_avg[idx]);
+ ii /= 16;
+ adc_avg[idx] += ii;
+ return adc_avg[idx];
+}
+
+//moving mean
+static inline uint16_t mean(int idx)
+{
+ adc_avg[idx]-=adc_avg[idx]/16;
+ adc_avg[idx]+=adc_buffer[idx];
+
+ return adc_mean[idx]=adc_avg[idx]/16;
+}
+
+//----------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------
 void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void DMA1_Channel1_IRQHandler(void)
  {
@@ -211,11 +241,23 @@ void DMA1_Channel1_IRQHandler(void)
    {
      dma_cntr++;
      GPIO_WriteBit(GPIOC, GPIO_Pin_4, (dma_cntr & 1)); // toggle DMA interrupt indicator
-
+#ifdef PRINT_ADC
      TIM1->CH3CVR = 1023-adc_buffer[0]; //PC0 PWM = ADC0 (CH4/PD3)
      TIM1->CH2CVR = 1023-adc_buffer[2]; //PC7 PWM = ADC1 (CH3/PD2)
      TIM1->CH1CVR = 1023-adc_buffer[1];
-
+#endif
+#ifdef PRINT_MEAN
+     TIM1->CH3CVR = 1023-mean(0);
+     TIM1->CH1CVR = 1023-mean(1);
+     TIM1->CH2CVR = 1023-mean(2);
+     mean(3);
+#endif
+#ifdef PRINT_AVG
+     TIM1->CH3CVR = 1023-avg(0); //PC0 PWM = ADC0 (CH4/PD3)
+     TIM1->CH2CVR = 1023-avg(2); //PC7 PWM = ADC1 (CH3/PD2)
+     TIM1->CH1CVR = 1023-avg(1);
+     avg(3);
+#endif
      DMA1->INTFCR = DMA_CTCIF1;
    }
  }
@@ -240,7 +282,7 @@ void DMA1_Channel1_IRQHandler(void)
  *
  * @return  none
  */
-void IWDG_Feed_Init(u16 prer, u16 rlr)
+static void IWDG_Feed_Init(u16 prer, u16 rlr)
  {
   IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
   IWDG_SetPrescaler(prer);
@@ -332,7 +374,7 @@ void IWDG_Feed_Init(u16 prer, u16 rlr)
 
 
 //----------------------------------------------------------------------------------
-void t1pwm_init( void )
+static void t1pwm_init(void)
 {
   // Enable GPIOC and TIM1 and AFIO *very important!*
   RCC->APB2PCENR |= RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC | RCC_APB2Periph_TIM1;
@@ -404,21 +446,21 @@ void t1pwm_init( void )
 /*
  * set timer channel PW
  */
-void t1pwm_setpw(uint8_t chl, uint16_t width)
- {
-  switch(chl&3)
-   {
-    case 0: TIM1->CH1CVR = width; break;
-    case 1: TIM1->CH2CVR = width; break;
-    case 2: TIM1->CH3CVR = width; break;
-    case 3: TIM1->CH4CVR = width; break;
-   }
- }
+//static void t1pwm_setpw(uint8_t chl, uint16_t width)
+// {
+//  switch(chl&3)
+//   {
+//    case 0: TIM1->CH1CVR = width; break;
+//    case 1: TIM1->CH2CVR = width; break;
+//    case 2: TIM1->CH3CVR = width; break;
+//    case 3: TIM1->CH4CVR = width; break;
+//   }
+// }
 //----------------------------------------------------------------------------------
 
 
 //----------------------------------------------------------------------------------
-uint8_t Button(void)
+static inline uint8_t Button(void)
  {
   static volatile tBtn Btn = {0};
   //Btn.Btn_curr = GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_0)?0:1;
@@ -442,7 +484,7 @@ uint8_t Button(void)
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-uint8_t RButton(void)
+static inline uint8_t RButton(void)
  {
   static volatile tBtn Btn = {0};
   uint8_t ret = 0;
@@ -470,7 +512,7 @@ uint8_t RButton(void)
 //----------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
-uint8_t RButton1(void)
+static inline uint8_t RButton1(void)
  {
   static volatile tBtn Btn = {0};
   uint8_t ret = 0;
@@ -547,13 +589,13 @@ void SysTick_Handler(void)
  * FlashOptionUser(0x08f7);// b=0x08;((~b)&0xff)|(b<<8) Default value RD7=nRST
  *
  */
-void Option_Byte_CFG(void)
-{
- FLASH_Unlock();
- FLASH_EraseOptionBytes();
- FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STOP_NoRST, OB_STDBY_NoRST, OB_RST_NoEN);
- FLASH_Lock();
-}
+//static void Option_Byte_CFG(void)
+//{
+// FLASH_Unlock();
+// FLASH_EraseOptionBytes();
+// FLASH_UserOptionByteConfig(OB_IWDG_SW, OB_STOP_NoRST, OB_STDBY_NoRST, OB_RST_NoEN);
+// FLASH_Lock();
+//}
 //----------------------------------------------------------------------------------
 #ifndef DEBUG
 __attribute__((used))
@@ -594,8 +636,8 @@ void *_sbrk(ptrdiff_t incr)
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
-inline uint8_t delta(uint32_t v1, uint32_t v2) __attribute__((always_inline));
-uint8_t delta(uint32_t v1, uint32_t v2)
+//inline uint8_t delta(uint32_t v1, uint32_t v2) __attribute__((always_inline));
+static inline uint8_t delta(uint32_t v1, uint32_t v2)
  {
   uint32_t ret;
   ret = v1>v2?v1-v2:v2-v1;
@@ -614,7 +656,7 @@ const uint8_t ee[64] __attribute__((section(".eesegment"))) =
 //----------------------------------------------------------------------------------
 static uint8_t buf[64];
 
-void FlashTest(void)
+static void FlashTest(void)
  {
   FLASH_Status s;
 
@@ -766,22 +808,48 @@ int main(void)
       {
        IWDG_ReloadCounter();   //Feed dog
       }
+#ifdef PRINT
      if (_100ms_flag)
       {
 	_100ms_flag = 0;
- #ifdef PRINT
-	if ((delta(adc_buffer_prev[0], adc_buffer[0]) > DELTA_ADC)||
-	    (delta(adc_buffer_prev[1], adc_buffer[1]) > DELTA_ADC)||
-	    (delta(adc_buffer_prev[2], adc_buffer[2]) > DELTA_ADC))
+#ifdef PRINT_ADC
+	if ((delta(adc_buffer_prev[0], adc_buffer[0]) >= DELTA_ADC)||
+	    (delta(adc_buffer_prev[1], adc_buffer[1]) >= DELTA_ADC)||
+	    (delta(adc_buffer_prev[2], adc_buffer[2]) >= DELTA_ADC))
 	 { //print if changed
 	  printf( "%4d %4d ", adc_buffer[0], adc_buffer[1]);
 	  printf( "%4d %4d  %d\r\n", adc_buffer[2], adc_buffer[3], dma_num);
+	  adc_buffer_prev[0] = adc_buffer[0];
+	  adc_buffer_prev[1] = adc_buffer[1];
+	  adc_buffer_prev[2] = adc_buffer[2];
 	 }
-	adc_buffer_prev[0] = adc_buffer[0];
-	adc_buffer_prev[1] = adc_buffer[1];
-	adc_buffer_prev[2] = adc_buffer[2];
- #endif
+#endif
+#ifdef PRINT_AVG
+	if ((delta(adc_buffer_prev[0], adc_avg[0]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[1], adc_avg[1]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[2], adc_avg[2]) > DELTA_ADC))
+	 { //print if changed
+	  printf( "%4d %4d ", adc_avg[0], adc_avg[1]);
+	  printf( "%4d %4d  %d\r\n", adc_avg[2], adc_avg[3], dma_num);
+	  adc_buffer_prev[0] = adc_avg[0];
+	  adc_buffer_prev[1] = adc_avg[1];
+	  adc_buffer_prev[2] = adc_avg[2];
+	 }
+#endif
+#ifdef PRINT_MEAN
+	if ((delta(adc_buffer_prev[0], adc_mean[0]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[1], adc_mean[1]) > DELTA_ADC)||
+	    (delta(adc_buffer_prev[2], adc_mean[2]) > DELTA_ADC))
+	 { //print if changed
+	  printf( "%4d %4d ", adc_mean[0], adc_mean[1]);
+	  printf( "%4d %4d  %d\r\n", adc_mean[2], adc_mean[3], dma_num);
+	  adc_buffer_prev[0] = adc_mean[0];
+	  adc_buffer_prev[1] = adc_mean[1];
+	  adc_buffer_prev[2] = adc_mean[2];
+	 }
+#endif
       }
+#endif
     }
   }
  }

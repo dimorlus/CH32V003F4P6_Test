@@ -1,10 +1,12 @@
 # CH32V003 test
 
-This [MounRiver](http://www.mounriver.com/) project example shows **SysTick** interrupt, **GPIO**, **ADC**&**DMA**, DMA interrupt, **PWM**, button reading, **Option** area flash, **persistent** (non initialize) variables, **Watchdog**, **UART** cyclic buffered IO with printf, **FLASH** memory for user data and **PD1/SWIO** as GPIO usage (commented in `void GPIO_INIT(void)`).
+This [MounRiver](http://www.mounriver.com/) project example shows **SysTick** interrupt, **GPIO**, **ADC**&**DMA**, DMA interrupt, **PWM**, button reading, **Option** area flash, **persistent** (non initialize) variables, **Watchdog**, **UART** cyclic buffered IO with *printf*, **FLASH** memory for user data and **PD1/SWIO** as GPIO usage (commented in `void GPIO_INIT(void)`).
 
 The following files are modified:  
 
 - *ch32v00x_flash.c* & *ch32v00x_flash.h* (`void FlashOptionData(uint8_t data0, uint8_t data1);` and `void FlashOptionUser(uint16_t user);` added).
+
+- ch32v00x_gpio.c & ch32v00x_gpio.h (bit manipulation functions declared as **inline**)
 
 - *Link.ld* (sections "**.no_init**" and **".eesegment"** added).
 
@@ -33,4 +35,4 @@ Circuit diagram :
 
 At start, the program prints the **Clock frequency**, **Chip ID**, **User Options** (determ the **PD7** usage), the number of reboots stored in the **User Options** area and then performs a series of erases and writes to flash memory. At the first start, there is an array specified in the program from 00 to 0f. Next, the specified sector (64 bytes) is erased and data from 3f down to 00 is written there. At the next start, they will be read.
 
-Then the program constantly prints to the UART (115200, 8, N, 1) the value of three analog channels and the Vref (1.2V) channel and the DMA transfer counter (if some value changes). Also prints terminal echo. LD5, LD6, LD7 shows PWMs corresponded with analog inputs. When you short press the button (up to 500ms), three bits of the button release counter are displayed on LD1..LD3. When the program starts, the reset counter saved in Data0 of the Option bytes is printed. Reset button if PD7 enabled suppress watchdog feeding and cause MCU reset.
+Then the program constantly prints to the **UART** (115200, 8, N, 1) the value of three filtered analog channels and the *Vref* (1.2V) channel and the **DMA** transfer counter per 100ms (if some value changes). Also prints terminal echo. LD5, LD6, LD7 shows PWMs corresponded with analog inputs. When you short press the button (up to 500ms), three bits of the button release counter are displayed on LD1..LD3. When the program starts, the reset counter saved in **Data0** of the **Option** bytes is printed. Reset button if **PD7** enabled suppress watchdog feeding and cause MCU reset.
