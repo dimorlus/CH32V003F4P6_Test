@@ -240,7 +240,7 @@ static inline uint16_t mean(int idx)
 
 //----------------------------------------------------------------------------------
 void DMA1_Channel1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
-void DMA1_Channel1_IRQHandler(void)
+void DMA1_Channel1_IRQHandler(void)//~42us
  {
   if(DMA1->INTFR & DMA1_FLAG_TC1)
    {

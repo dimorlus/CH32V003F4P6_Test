@@ -100,7 +100,6 @@ SECTIONS
       KEEP (*(.dtors))
     } >FLASH AT>FLASH 
 
- 
 	.eesegment : 
 	{
 	  . = ALIGN(4);
@@ -110,7 +109,6 @@ SECTIONS
 	  . = ALIGN(4);
 	} >EEPROM
    
-
     .dalign :
     {
       . = ALIGN(4);
@@ -177,6 +175,3 @@ SECTIONS
 	} >RAM 
 	
 }
-
-
-

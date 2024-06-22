@@ -20,6 +20,8 @@ extern "C"
 
 #include <ch32v00x.h>
 
+#define _INLINE_GPIO_
+
 /* Output Maximum frequency selection */
 typedef enum
  {
@@ -112,6 +114,7 @@ void GPIO_DeInit(GPIO_TypeDef *GPIOx);
 void GPIO_AFIODeInit(void);
 void GPIO_Init(GPIO_TypeDef *GPIOx, GPIO_InitTypeDef *GPIO_InitStruct);
 void GPIO_StructInit(GPIO_InitTypeDef *GPIO_InitStruct);
+#ifdef _INLINE_GPIO_
 uint8_t inline GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 uint16_t inline GPIO_ReadInputData(GPIO_TypeDef *GPIOx);
 uint8_t inline GPIO_ReadOutputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
@@ -120,11 +123,23 @@ void inline GPIO_SetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void inline GPIO_ResetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void inline GPIO_WriteBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, BitAction BitVal);
 void inline GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t PortVal);
+#else
+uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+uint16_t GPIO_ReadInputData(GPIO_TypeDef *GPIOx);
+uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+uint16_t GPIO_ReadOutputData(GPIO_TypeDef *GPIOx);
+void GPIO_SetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+void GPIO_ResetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
+void GPIO_WriteBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, BitAction BitVal);
+void GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t PortVal);
+#endif
 void GPIO_PinLockConfig(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void GPIO_EventOutputConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource);
 void GPIO_EventOutputCmd(FunctionalState NewState);
 void GPIO_PinRemapConfig(uint32_t GPIO_Remap, FunctionalState NewState);
 void GPIO_EXTILineConfig(uint8_t GPIO_PortSource, uint8_t GPIO_PinSource);
+
+#ifdef _INLINE_GPIO_
 /*********************************************************************
  * @fn      GPIO_ReadInputDataBit
  *
@@ -277,6 +292,7 @@ void inline GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t PortVal)
  {
   GPIOx->OUTDR = PortVal;
  }
+#endif
 
 #ifdef __cplusplus
 }

@@ -136,159 +136,160 @@ void GPIO_StructInit(GPIO_InitTypeDef *GPIO_InitStruct)
   GPIO_InitStruct->GPIO_Mode = GPIO_Mode_IN_FLOATING;
  }
 
-///*********************************************************************
-// * @fn      GPIO_ReadInputDataBit
-// *
-// * @brief   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *
-// * @param    GPIO_Pin - specifies the port bit to read.
-// *             This parameter can be GPIO_Pin_x where x can be (0..7).
-// *
-// * @return  The input port pin value.
-// */
-//uint8_t inline GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-// {
-//  uint8_t bitstatus = 0x00;
-//
-//  if ((GPIOx->INDR & GPIO_Pin) != (uint32_t) Bit_RESET)
-//   {
-//    bitstatus = (uint8_t) Bit_SET;
-//   }
-//  else
-//   {
-//    bitstatus = (uint8_t) Bit_RESET;
-//   }
-//
-//  return bitstatus;
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_ReadInputData
-// *
-// * @brief   Reads the specified GPIO input data port.
-// *
-// * @param   GPIOx: where x can be (A..D) to select the GPIO peripheral.
-// *
-// * @return  The input port pin value.
-// */
-//uint16_t inline GPIO_ReadInputData(GPIO_TypeDef *GPIOx)
-// {
-//  return ((uint16_t) GPIOx->INDR);
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_ReadOutputDataBit
-// *
-// * @brief   Reads the specified output data port bit.
-// *
-// * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *          GPIO_Pin - specifies the port bit to read.
-// *            This parameter can be GPIO_Pin_x where x can be (0..7).
-// *
-// * @return  none
-// */
-//uint8_t inline GPIO_ReadOutputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-// {
-//  uint8_t bitstatus = 0x00;
-//
-//  if ((GPIOx->OUTDR & GPIO_Pin) != (uint32_t) Bit_RESET)
-//   {
-//    bitstatus = (uint8_t) Bit_SET;
-//   }
-//  else
-//   {
-//    bitstatus = (uint8_t) Bit_RESET;
-//   }
-//
-//  return bitstatus;
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_ReadOutputData
-// *
-// * @brief   Reads the specified GPIO output data port.
-// *
-// * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *
-// * @return  GPIO output port pin value.
-// */
-//uint16_t inline GPIO_ReadOutputData(GPIO_TypeDef *GPIOx)
-// {
-//  return ((uint16_t) GPIOx->OUTDR);
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_SetBits
-// *
-// * @brief   Sets the selected data port bits.
-// *
-// * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *          GPIO_Pin - specifies the port bits to be written.
-// *            This parameter can be any combination of GPIO_Pin_x where x can be (0..7).
-// *
-// * @return  none
-// */
-//void inline GPIO_SetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-// {
-//  GPIOx->BSHR = GPIO_Pin;
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_ResetBits
-// *
-// * @brief   Clears the selected data port bits.
-// *
-// * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *          GPIO_Pin - specifies the port bits to be written.
-// *            This parameter can be any combination of GPIO_Pin_x where x can be (0..7).
-// *
-// * @return  none
-// */
-//void inline GPIO_ResetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-// {
-//  GPIOx->BCR = GPIO_Pin;
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_WriteBit
-// *
-// * @brief   Sets or clears the selected data port bit.
-// *
-// * @param   GPIO_Pin - specifies the port bit to be written.
-// *            This parameter can be one of GPIO_Pin_x where x can be (0..7).
-// *          BitVal - specifies the value to be written to the selected bit.
-// *            Bit_RESET - to clear the port pin.
-// *            Bit_SET - to set the port pin.
-// *
-// * @return  none
-// */
-//void inline GPIO_WriteBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, BitAction BitVal)
-// {
-//  if (BitVal != Bit_RESET)
-//   {
-//    GPIOx->BSHR = GPIO_Pin;
-//   }
-//  else
-//   {
-//    GPIOx->BCR = GPIO_Pin;
-//   }
-// }
-//
-///*********************************************************************
-// * @fn      GPIO_Write
-// *
-// * @brief   Writes data to the specified GPIO data port.
-// *
-// * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
-// *          PortVal - specifies the value to be written to the port output data register.
-// *
-// * @return  none
-// */
-//void inline GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t PortVal)
-// {
-//  GPIOx->OUTDR = PortVal;
-// }
+#ifndef _INLINE_GPIO_
+/*********************************************************************
+ * @fn      GPIO_ReadInputDataBit
+ *
+ * @brief   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *
+ * @param    GPIO_Pin - specifies the port bit to read.
+ *             This parameter can be GPIO_Pin_x where x can be (0..7).
+ *
+ * @return  The input port pin value.
+ */
+uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+ {
+  uint8_t bitstatus = 0x00;
 
+  if ((GPIOx->INDR & GPIO_Pin) != (uint32_t) Bit_RESET)
+   {
+    bitstatus = (uint8_t) Bit_SET;
+   }
+  else
+   {
+    bitstatus = (uint8_t) Bit_RESET;
+   }
+
+  return bitstatus;
+ }
+
+/*********************************************************************
+ * @fn      GPIO_ReadInputData
+ *
+ * @brief   Reads the specified GPIO input data port.
+ *
+ * @param   GPIOx: where x can be (A..D) to select the GPIO peripheral.
+ *
+ * @return  The input port pin value.
+ */
+uint16_t GPIO_ReadInputData(GPIO_TypeDef *GPIOx)
+ {
+  return ((uint16_t) GPIOx->INDR);
+ }
+
+/*********************************************************************
+ * @fn      GPIO_ReadOutputDataBit
+ *
+ * @brief   Reads the specified output data port bit.
+ *
+ * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *          GPIO_Pin - specifies the port bit to read.
+ *            This parameter can be GPIO_Pin_x where x can be (0..7).
+ *
+ * @return  none
+ */
+uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+ {
+  uint8_t bitstatus = 0x00;
+
+  if ((GPIOx->OUTDR & GPIO_Pin) != (uint32_t) Bit_RESET)
+   {
+    bitstatus = (uint8_t) Bit_SET;
+   }
+  else
+   {
+    bitstatus = (uint8_t) Bit_RESET;
+   }
+
+  return bitstatus;
+ }
+
+/*********************************************************************
+ * @fn      GPIO_ReadOutputData
+ *
+ * @brief   Reads the specified GPIO output data port.
+ *
+ * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *
+ * @return  GPIO output port pin value.
+ */
+uint16_t GPIO_ReadOutputData(GPIO_TypeDef *GPIOx)
+ {
+  return ((uint16_t) GPIOx->OUTDR);
+ }
+
+/*********************************************************************
+ * @fn      GPIO_SetBits
+ *
+ * @brief   Sets the selected data port bits.
+ *
+ * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *          GPIO_Pin - specifies the port bits to be written.
+ *            This parameter can be any combination of GPIO_Pin_x where x can be (0..7).
+ *
+ * @return  none
+ */
+void GPIO_SetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+ {
+  GPIOx->BSHR = GPIO_Pin;
+ }
+
+/*********************************************************************
+ * @fn      GPIO_ResetBits
+ *
+ * @brief   Clears the selected data port bits.
+ *
+ * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *          GPIO_Pin - specifies the port bits to be written.
+ *            This parameter can be any combination of GPIO_Pin_x where x can be (0..7).
+ *
+ * @return  none
+ */
+void GPIO_ResetBits(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+ {
+  GPIOx->BCR = GPIO_Pin;
+ }
+
+/*********************************************************************
+ * @fn      GPIO_WriteBit
+ *
+ * @brief   Sets or clears the selected data port bit.
+ *
+ * @param   GPIO_Pin - specifies the port bit to be written.
+ *            This parameter can be one of GPIO_Pin_x where x can be (0..7).
+ *          BitVal - specifies the value to be written to the selected bit.
+ *            Bit_RESET - to clear the port pin.
+ *            Bit_SET - to set the port pin.
+ *
+ * @return  none
+ */
+void GPIO_WriteBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, BitAction BitVal)
+ {
+  if (BitVal != Bit_RESET)
+   {
+    GPIOx->BSHR = GPIO_Pin;
+   }
+  else
+   {
+    GPIOx->BCR = GPIO_Pin;
+   }
+ }
+
+/*********************************************************************
+ * @fn      GPIO_Write
+ *
+ * @brief   Writes data to the specified GPIO data port.
+ *
+ * @param   GPIOx - where x can be (A..D) to select the GPIO peripheral.
+ *          PortVal - specifies the value to be written to the port output data register.
+ *
+ * @return  none
+ */
+void GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t PortVal)
+ {
+  GPIOx->OUTDR = PortVal;
+ }
+#endif
 /*********************************************************************
  * @fn      GPIO_PinLockConfig
  *
