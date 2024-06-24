@@ -30,6 +30,7 @@
 #define PRINT_MEAN
 
 #include "eusart1.h"
+#include "i2c_hal.h"
 
 #define _PD7_ //Use PD7 as GPIO
 #define MAGIC 0x55AA
@@ -644,6 +645,34 @@ static void FlashTest(void)
  }
 //----------------------------------------------------------------------------------
 
+
+
+//----------------------------------------------------------------------------------
+void EEPROM_Test(uint8_t cnt)
+ {
+  const uint8_t hello1[] = "Hello, World!";
+  const uint8_t hello2[] = "*************";
+  char const* cp;
+  if (cnt&1) cp = hello1;
+  else cp = hello2;
+
+  printf("Init I2C\n\r");
+  HAL_I2C_Init(400000, 0xA0);
+  if (HAL_I2C_Mem_Write(I2C1, 0xA0, 0, cp, sizeof(hello1), 5*I2C_TIMEOUT_TICK)==I2C_OK)
+   printf("I2C Write OK\n\r");
+  {
+   uint8_t data[16];
+   uint8_t address;
+   if (HAL_I2C_Mem_Read(I2C1, 0xA0, 0, data, 16, I2C_TIMEOUT_TICK)==I2C_OK)
+    {
+     printf("%s\r\n",data);
+//     for(address=0; address<16; address++)
+//       printf("%d:%02x\r\n", address, data[address]);
+    }
+  }
+ }
+//----------------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------------
 int main(void)
  {
@@ -704,6 +733,9 @@ int main(void)
   t1pwm_init();
 
   FlashTest();
+
+  EEPROM_Test(bootcnt);
+
   {
    uint16_t adc_buffer_prev[ADC_NUMCHLS] = {0};
    while(1) //main loop

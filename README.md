@@ -36,3 +36,5 @@ Circuit diagram :
 At start, the program prints the **Clock frequency**, **Chip ID**, **User Options** (determ the **PD7** usage), the number of reboots stored in the **User Options** area and then performs a series of erases and writes to flash memory. At the first start, there is an array specified in the program from 00 to 0f. Next, the specified sector (64 bytes) is erased and data from 3f down to 00 is written there. At the next start, they will be read.
 
 Then the program constantly prints to the **UART** (115200, 8, N, 1) the value of three filtered analog channels and the *Vref* (1.2V) channel and the **DMA** transfer counter per 100ms (if some value changes). Also prints terminal echo. LD5, LD6, LD7 shows PWMs corresponded with analog inputs. When you short press the button (up to 500ms), three bits of the button release counter are displayed on LD1..LD3. When the program starts, the reset counter saved in **Data0** of the **Option** bytes is printed. Reset button if **PD7** enabled suppress watchdog feeding and cause MCU reset.
+
+EEPROM test demonstrate **IIC** operation with 24LC04 I<sup>2</sup>C serial EEPROM. 

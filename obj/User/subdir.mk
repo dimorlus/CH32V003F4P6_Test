@@ -7,18 +7,21 @@
 C_SRCS += \
 ../User/ch32v00x_it.c \
 ../User/eusart1.c \
+../User/i2c_hal.c \
 ../User/main.c \
 ../User/system_ch32v00x.c 
 
 OBJS += \
 ./User/ch32v00x_it.o \
 ./User/eusart1.o \
+./User/i2c_hal.o \
 ./User/main.o \
 ./User/system_ch32v00x.o 
 
 C_DEPS += \
 ./User/ch32v00x_it.d \
 ./User/eusart1.d \
+./User/i2c_hal.d \
 ./User/main.d \
 ./User/system_ch32v00x.d 
 

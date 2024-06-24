@@ -28,15 +28,17 @@
   Section: Data Type Definitions
 */
 
-typedef union {
-    struct {
-        unsigned perr : 1;
-        unsigned ferr : 1;
-        unsigned oerr : 1;
-        unsigned reserved : 5;
-    };
-    uint8_t status;
-}eusart1_status_t;
+typedef union
+ {
+  struct
+   {
+    unsigned perr :1;
+    unsigned ferr :1;
+    unsigned oerr :1;
+    unsigned reserved :5;
+   };
+  uint8_t status;
+ } eusart1_status_t;
 
 /**
  Section: Global variables

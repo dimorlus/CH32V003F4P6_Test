@@ -9,7 +9,7 @@
     (CompileFileAddedOrDeleted "x")
     (ANNOTATE_Scope "0")
     (ANNOTATE_Mode "1")
-    (ANNOTATE_Action "1")
+    (ANNOTATE_Action "0")
     (ANNOTATE_Reset_References_to_1 "FALSE")
     (ANNOTATE_No_Page_Number_Change "FALSE")
     (ANNOTATE_Property_Combine "{Value}{Source Package}")
