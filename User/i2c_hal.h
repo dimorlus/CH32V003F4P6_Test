@@ -12,7 +12,7 @@
 #include "ch32v00x_conf.h"
 //#include "systick_hal.h"
 
-#define I2C_TIMEOUT_TICK 48000000/1000 //1ms
+#define I2C_TIMEOUT_TICK SystemCoreClock/1000 //1ms
 
 typedef enum {
     I2C_OK = 0,

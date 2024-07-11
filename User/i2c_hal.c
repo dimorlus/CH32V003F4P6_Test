@@ -254,7 +254,7 @@ uint8_t HAL_I2C_Mem_Write(I2C_TypeDef *i2c_periph, uint8_t DevAddress, uint8_t M
   I2C_Send7bitAddress(i2c_periph, DevAddress, I2C_Direction_Transmitter);
 
   /* address flag set means i2c slave sends ACK */
-  while((!I2C_CheckEvent( i2c_periph, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED )) && (get_tick() - tickstart < i2c_timeout));
+  while((!I2C_CheckEvent(i2c_periph, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) && (get_tick() - tickstart < i2c_timeout));
 
   if (get_tick() - tickstart < i2c_timeout)
    {
@@ -268,7 +268,7 @@ uint8_t HAL_I2C_Mem_Write(I2C_TypeDef *i2c_periph, uint8_t DevAddress, uint8_t M
   I2C_SendData(i2c_periph, MemAddress);
 
   /* wait until transmission complete */
-  while((!I2C_CheckEvent( i2c_periph, I2C_EVENT_MASTER_BYTE_TRANSMITTED )) && (get_tick() - tickstart < i2c_timeout));
+  while((!I2C_CheckEvent(i2c_periph, I2C_EVENT_MASTER_BYTE_TRANSMITTED )) && (get_tick() - tickstart < i2c_timeout));
 
   if (get_tick() - tickstart < i2c_timeout)
    {
@@ -286,7 +286,7 @@ uint8_t HAL_I2C_Mem_Write(I2C_TypeDef *i2c_periph, uint8_t DevAddress, uint8_t M
     /* point to the next byte to be written */
     pData++;
     /* wait until transmission complete */
-    while((!I2C_CheckEvent( i2c_periph, I2C_EVENT_MASTER_BYTE_TRANSMITTED )) && (get_tick() - tickstart < i2c_timeout));
+    while((!I2C_CheckEvent(i2c_periph, I2C_EVENT_MASTER_BYTE_TRANSMITTED )) && (get_tick() - tickstart < i2c_timeout));
 
     if (get_tick() - tickstart < i2c_timeout)
      {
@@ -300,7 +300,7 @@ uint8_t HAL_I2C_Mem_Write(I2C_TypeDef *i2c_periph, uint8_t DevAddress, uint8_t M
 
   I2C_GenerateSTOP(i2c_periph, ENABLE);
 
-  while (get_tick() - tickstart < i2c_timeout);
+  while (get_tick() - tickstart < i2c_timeout); //Wait to the end of timeout
   return I2C_OK;
  }
 

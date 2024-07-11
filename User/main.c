@@ -662,7 +662,7 @@ void EEPROM_Test(uint8_t cnt)
    printf("I2C Write OK\n\r");
   {
    uint8_t data[16];
-   uint8_t address;
+   //uint8_t address;
    if (HAL_I2C_Mem_Read(I2C1, 0xA0, 0, data, 16, I2C_TIMEOUT_TICK)==I2C_OK)
     {
      printf("%s\r\n",data);

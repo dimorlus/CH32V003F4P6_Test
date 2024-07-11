@@ -100,13 +100,13 @@
  * @return  none
  */
 void I2C_DeInit(I2C_TypeDef *I2Cx)
- {
-  if (I2Cx == I2C1)
-   {
-    RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, ENABLE);
-    RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, DISABLE);
-   }
- }
+{
+    if(I2Cx == I2C1)
+    {
+        RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, ENABLE);
+        RCC_APB1PeriphResetCmd(RCC_APB1Periph_I2C1, DISABLE);
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_Init
@@ -120,65 +120,65 @@ void I2C_DeInit(I2C_TypeDef *I2Cx)
  * @return  none
  */
 void I2C_Init(I2C_TypeDef *I2Cx, I2C_InitTypeDef *I2C_InitStruct)
- {
-  uint16_t tmpreg = 0, freqrange = 0;
-  uint16_t result = 0x04;
-  uint32_t pclk1 = 8000000;
+{
+    uint16_t tmpreg = 0, freqrange = 0;
+    uint16_t result = 0x04;
+    uint32_t pclk1 = 8000000;
 
-  RCC_ClocksTypeDef rcc_clocks;
+    RCC_ClocksTypeDef rcc_clocks;
 
-  tmpreg = I2Cx->CTLR2;
-  tmpreg &= CTLR2_FREQ_Reset;
-  RCC_GetClocksFreq(&rcc_clocks);
-  pclk1 = rcc_clocks.PCLK1_Frequency;
-  freqrange = (uint16_t) (pclk1 / 1000000);
-  tmpreg |= freqrange;
-  I2Cx->CTLR2 = tmpreg;
+    tmpreg = I2Cx->CTLR2;
+    tmpreg &= CTLR2_FREQ_Reset;
+    RCC_GetClocksFreq(&rcc_clocks);
+    pclk1 = rcc_clocks.PCLK1_Frequency;
+    freqrange = (uint16_t)(pclk1 / 1000000);
+    tmpreg |= freqrange;
+    I2Cx->CTLR2 = tmpreg;
 
-  I2Cx->CTLR1 &= CTLR1_PE_Reset;
-  tmpreg = 0;
+    I2Cx->CTLR1 &= CTLR1_PE_Reset;
+    tmpreg = 0;
 
-  if (I2C_InitStruct->I2C_ClockSpeed <= 100000)
-   {
-    result = (uint16_t) (pclk1 / (I2C_InitStruct->I2C_ClockSpeed << 1));
+    if(I2C_InitStruct->I2C_ClockSpeed <= 100000)
+    {
+        result = (uint16_t)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed << 1));
 
-    if (result < 0x04)
-     {
-      result = 0x04;
-     }
+        if(result < 0x04)
+        {
+            result = 0x04;
+        }
 
-    tmpreg |= result;
-   }
-  else
-   {
-    if (I2C_InitStruct->I2C_DutyCycle == I2C_DutyCycle_2)
-     {
-      result = (uint16_t) (pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 3));
-     }
+        tmpreg |= result;
+    }
     else
-     {
-      result = (uint16_t) (pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 25));
-      result |= I2C_DutyCycle_16_9;
-     }
+    {
+        if(I2C_InitStruct->I2C_DutyCycle == I2C_DutyCycle_2)
+        {
+            result = (uint16_t)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 3));
+        }
+        else
+        {
+            result = (uint16_t)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 25));
+            result |= I2C_DutyCycle_16_9;
+        }
 
-    if ((result & CKCFGR_CCR_Set) == 0)
-     {
-      result |= (uint16_t) 0x0001;
-     }
+        if((result & CKCFGR_CCR_Set) == 0)
+        {
+            result |= (uint16_t)0x0001;
+        }
 
-    tmpreg |= (uint16_t) (result | CKCFGR_FS_Set);
-   }
+        tmpreg |= (uint16_t)(result | CKCFGR_FS_Set);
+    }
 
-  I2Cx->CKCFGR = tmpreg;
-  I2Cx->CTLR1 |= CTLR1_PE_Set;
+    I2Cx->CKCFGR = tmpreg;
+    I2Cx->CTLR1 |= CTLR1_PE_Set;
 
-  tmpreg = I2Cx->CTLR1;
-  tmpreg &= CTLR1_CLEAR_Mask;
-  tmpreg |= (uint16_t) ((uint32_t) I2C_InitStruct->I2C_Mode | I2C_InitStruct->I2C_Ack);
-  I2Cx->CTLR1 = tmpreg;
+    tmpreg = I2Cx->CTLR1;
+    tmpreg &= CTLR1_CLEAR_Mask;
+    tmpreg |= (uint16_t)((uint32_t)I2C_InitStruct->I2C_Mode | I2C_InitStruct->I2C_Ack);
+    I2Cx->CTLR1 = tmpreg;
 
-  I2Cx->OADDR1 = (I2C_InitStruct->I2C_AcknowledgedAddress | I2C_InitStruct->I2C_OwnAddress1);
- }
+    I2Cx->OADDR1 = (I2C_InitStruct->I2C_AcknowledgedAddress | I2C_InitStruct->I2C_OwnAddress1);
+}
 
 /*********************************************************************
  * @fn      I2C_StructInit
@@ -191,14 +191,14 @@ void I2C_Init(I2C_TypeDef *I2Cx, I2C_InitTypeDef *I2C_InitStruct)
  * @return  none
  */
 void I2C_StructInit(I2C_InitTypeDef *I2C_InitStruct)
- {
-  I2C_InitStruct->I2C_ClockSpeed = 5000;
-  I2C_InitStruct->I2C_Mode = I2C_Mode_I2C;
-  I2C_InitStruct->I2C_DutyCycle = I2C_DutyCycle_2;
-  I2C_InitStruct->I2C_OwnAddress1 = 0;
-  I2C_InitStruct->I2C_Ack = I2C_Ack_Disable;
-  I2C_InitStruct->I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
- }
+{
+    I2C_InitStruct->I2C_ClockSpeed = 5000;
+    I2C_InitStruct->I2C_Mode = I2C_Mode_I2C;
+    I2C_InitStruct->I2C_DutyCycle = I2C_DutyCycle_2;
+    I2C_InitStruct->I2C_OwnAddress1 = 0;
+    I2C_InitStruct->I2C_Ack = I2C_Ack_Disable;
+    I2C_InitStruct->I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+}
 
 /*********************************************************************
  * @fn      I2C_Cmd
@@ -211,16 +211,16 @@ void I2C_StructInit(I2C_InitTypeDef *I2C_InitStruct)
  * @return  none
  */
 void I2C_Cmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_PE_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_PE_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_PE_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_PE_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_DMACmd
@@ -233,16 +233,16 @@ void I2C_Cmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_DMACmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR2 |= CTLR2_DMAEN_Set;
-   }
-  else
-   {
-    I2Cx->CTLR2 &= CTLR2_DMAEN_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR2 |= CTLR2_DMAEN_Set;
+    }
+    else
+    {
+        I2Cx->CTLR2 &= CTLR2_DMAEN_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_DMALastTransferCmd
@@ -255,16 +255,16 @@ void I2C_DMACmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_DMALastTransferCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR2 |= CTLR2_LAST_Set;
-   }
-  else
-   {
-    I2Cx->CTLR2 &= CTLR2_LAST_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR2 |= CTLR2_LAST_Set;
+    }
+    else
+    {
+        I2Cx->CTLR2 &= CTLR2_LAST_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_GenerateSTART
@@ -277,16 +277,16 @@ void I2C_DMALastTransferCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_GenerateSTART(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_START_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_START_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_START_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_START_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_GenerateSTOP
@@ -299,16 +299,16 @@ void I2C_GenerateSTART(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_GenerateSTOP(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_STOP_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_STOP_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_STOP_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_STOP_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_AcknowledgeConfig
@@ -321,16 +321,16 @@ void I2C_GenerateSTOP(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_AcknowledgeConfig(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_ACK_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_ACK_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_ACK_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_ACK_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_OwnAddress2Config
@@ -343,14 +343,14 @@ void I2C_AcknowledgeConfig(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_OwnAddress2Config(I2C_TypeDef *I2Cx, uint8_t Address)
- {
-  uint16_t tmpreg = 0;
+{
+    uint16_t tmpreg = 0;
 
-  tmpreg = I2Cx->OADDR2;
-  tmpreg &= OADDR2_ADD2_Reset;
-  tmpreg |= (uint16_t) ((uint16_t) Address & (uint16_t) 0x00FE);
-  I2Cx->OADDR2 = tmpreg;
- }
+    tmpreg = I2Cx->OADDR2;
+    tmpreg &= OADDR2_ADD2_Reset;
+    tmpreg |= (uint16_t)((uint16_t)Address & (uint16_t)0x00FE);
+    I2Cx->OADDR2 = tmpreg;
+}
 
 /*********************************************************************
  * @fn      I2C_DualAddressCmd
@@ -363,16 +363,16 @@ void I2C_OwnAddress2Config(I2C_TypeDef *I2Cx, uint8_t Address)
  * @return  none
  */
 void I2C_DualAddressCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->OADDR2 |= OADDR2_ENDUAL_Set;
-   }
-  else
-   {
-    I2Cx->OADDR2 &= OADDR2_ENDUAL_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->OADDR2 |= OADDR2_ENDUAL_Set;
+    }
+    else
+    {
+        I2Cx->OADDR2 &= OADDR2_ENDUAL_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_GeneralCallCmd
@@ -385,16 +385,16 @@ void I2C_DualAddressCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_GeneralCallCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_ENGC_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_ENGC_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_ENGC_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_ENGC_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_ITConfig
@@ -411,16 +411,16 @@ void I2C_GeneralCallCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_ITConfig(I2C_TypeDef *I2Cx, uint16_t I2C_IT, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR2 |= I2C_IT;
-   }
-  else
-   {
-    I2Cx->CTLR2 &= (uint16_t) ~I2C_IT;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR2 |= I2C_IT;
+    }
+    else
+    {
+        I2Cx->CTLR2 &= (uint16_t)~I2C_IT;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_SendData
@@ -433,9 +433,9 @@ void I2C_ITConfig(I2C_TypeDef *I2Cx, uint16_t I2C_IT, FunctionalState NewState)
  * @return  none
  */
 void I2C_SendData(I2C_TypeDef *I2Cx, uint8_t Data)
- {
-  I2Cx->DATAR = Data;
- }
+{
+    I2Cx->DATAR = Data;
+}
 
 /*********************************************************************
  * @fn      I2C_ReceiveData
@@ -447,9 +447,9 @@ void I2C_SendData(I2C_TypeDef *I2Cx, uint8_t Data)
  * @return  The value of the received data.
  */
 uint8_t I2C_ReceiveData(I2C_TypeDef *I2Cx)
- {
-  return (uint8_t) I2Cx->DATAR;
- }
+{
+    return (uint8_t)I2Cx->DATAR;
+}
 
 /*********************************************************************
  * @fn      I2C_Send7bitAddress
@@ -466,18 +466,18 @@ uint8_t I2C_ReceiveData(I2C_TypeDef *I2Cx)
  * @return  none
  */
 void I2C_Send7bitAddress(I2C_TypeDef *I2Cx, uint8_t Address, uint8_t I2C_Direction)
- {
-  if (I2C_Direction != I2C_Direction_Transmitter)
-   {
-    Address |= OADDR1_ADD0_Set;
-   }
-  else
-   {
-    Address &= OADDR1_ADD0_Reset;
-   }
+{
+    if(I2C_Direction != I2C_Direction_Transmitter)
+    {
+        Address |= OADDR1_ADD0_Set;
+    }
+    else
+    {
+        Address &= OADDR1_ADD0_Reset;
+    }
 
-  I2Cx->DATAR = Address;
- }
+    I2Cx->DATAR = Address;
+}
 
 /*********************************************************************
  * @fn      I2C_ReadRegister
@@ -498,14 +498,14 @@ void I2C_Send7bitAddress(I2C_TypeDef *I2Cx, uint8_t Address, uint8_t I2C_Directi
  * @return  none
  */
 uint16_t I2C_ReadRegister(I2C_TypeDef *I2Cx, uint8_t I2C_Register)
- {
-  __IO uint32_t tmp = 0;
+{
+    __IO uint32_t tmp = 0;
 
-  tmp = (uint32_t) I2Cx;
-  tmp += I2C_Register;
+    tmp = (uint32_t)I2Cx;
+    tmp += I2C_Register;
 
-  return (*(__IO uint16_t *) tmp);
- }
+    return (*(__IO uint16_t *)tmp);
+}
 
 /*********************************************************************
  * @fn      I2C_SoftwareResetCmd
@@ -518,16 +518,16 @@ uint16_t I2C_ReadRegister(I2C_TypeDef *I2Cx, uint8_t I2C_Register)
  * @return  none
  */
 void I2C_SoftwareResetCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_SWRST_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_SWRST_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_SWRST_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_SWRST_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_NACKPositionConfig
@@ -547,16 +547,16 @@ void I2C_SoftwareResetCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_NACKPositionConfig(I2C_TypeDef *I2Cx, uint16_t I2C_NACKPosition)
- {
-  if (I2C_NACKPosition == I2C_NACKPosition_Next)
-   {
-    I2Cx->CTLR1 |= I2C_NACKPosition_Next;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= I2C_NACKPosition_Current;
-   }
- }
+{
+    if(I2C_NACKPosition == I2C_NACKPosition_Next)
+    {
+        I2Cx->CTLR1 |= I2C_NACKPosition_Next;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= I2C_NACKPosition_Current;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_TransmitPEC
@@ -569,16 +569,16 @@ void I2C_NACKPositionConfig(I2C_TypeDef *I2Cx, uint16_t I2C_NACKPosition)
  * @return  none
  */
 void I2C_TransmitPEC(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_PEC_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_PEC_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_PEC_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_PEC_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_PECPositionConfig
@@ -593,16 +593,16 @@ void I2C_TransmitPEC(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_PECPositionConfig(I2C_TypeDef *I2Cx, uint16_t I2C_PECPosition)
- {
-  if (I2C_PECPosition == I2C_PECPosition_Next)
-   {
-    I2Cx->CTLR1 |= I2C_PECPosition_Next;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= I2C_PECPosition_Current;
-   }
- }
+{
+    if(I2C_PECPosition == I2C_PECPosition_Next)
+    {
+        I2Cx->CTLR1 |= I2C_PECPosition_Next;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= I2C_PECPosition_Current;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_CalculatePEC
@@ -615,16 +615,16 @@ void I2C_PECPositionConfig(I2C_TypeDef *I2Cx, uint16_t I2C_PECPosition)
  * @return  none
  */
 void I2C_CalculatePEC(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_ENPEC_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_ENPEC_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_ENPEC_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_ENPEC_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_GetPEC
@@ -636,9 +636,9 @@ void I2C_CalculatePEC(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  The PEC value.
  */
 uint8_t I2C_GetPEC(I2C_TypeDef *I2Cx)
- {
-  return ((I2Cx->STAR2) >> 8);
- }
+{
+    return ((I2Cx->STAR2) >> 8);
+}
 
 /*********************************************************************
  * @fn      I2C_ARPCmd
@@ -651,16 +651,16 @@ uint8_t I2C_GetPEC(I2C_TypeDef *I2Cx)
  * @return  The PEC value.
  */
 void I2C_ARPCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState != DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_ENARP_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_ENARP_Reset;
-   }
- }
+{
+    if(NewState != DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_ENARP_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_ENARP_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_StretchClockCmd
@@ -673,16 +673,16 @@ void I2C_ARPCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_StretchClockCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
- {
-  if (NewState == DISABLE)
-   {
-    I2Cx->CTLR1 |= CTLR1_NOSTRETCH_Set;
-   }
-  else
-   {
-    I2Cx->CTLR1 &= CTLR1_NOSTRETCH_Reset;
-   }
- }
+{
+    if(NewState == DISABLE)
+    {
+        I2Cx->CTLR1 |= CTLR1_NOSTRETCH_Set;
+    }
+    else
+    {
+        I2Cx->CTLR1 &= CTLR1_NOSTRETCH_Reset;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_FastModeDutyCycleConfig
@@ -697,16 +697,16 @@ void I2C_StretchClockCmd(I2C_TypeDef *I2Cx, FunctionalState NewState)
  * @return  none
  */
 void I2C_FastModeDutyCycleConfig(I2C_TypeDef *I2Cx, uint16_t I2C_DutyCycle)
- {
-  if (I2C_DutyCycle != I2C_DutyCycle_16_9)
-   {
-    I2Cx->CKCFGR &= I2C_DutyCycle_2;
-   }
-  else
-   {
-    I2Cx->CKCFGR |= I2C_DutyCycle_16_9;
-   }
- }
+{
+    if(I2C_DutyCycle != I2C_DutyCycle_16_9)
+    {
+        I2Cx->CKCFGR &= I2C_DutyCycle_2;
+    }
+    else
+    {
+        I2Cx->CKCFGR |= I2C_DutyCycle_16_9;
+    }
+}
 
 /*********************************************************************
  * @fn      I2C_CheckEvent
@@ -740,28 +740,28 @@ void I2C_FastModeDutyCycleConfig(I2C_TypeDef *I2Cx, uint16_t I2C_DutyCycle)
  * @return  ErrorStatus - READY or NoREADY.
  */
 ErrorStatus I2C_CheckEvent(I2C_TypeDef *I2Cx, uint32_t I2C_EVENT)
- {
-  uint32_t lastevent = 0;
-  uint32_t flag1 = 0, flag2 = 0;
-  ErrorStatus status = NoREADY;
+{
+    uint32_t    lastevent = 0;
+    uint32_t    flag1 = 0, flag2 = 0;
+    ErrorStatus status = NoREADY;
 
-  flag1 = I2Cx->STAR1;
-  flag2 = I2Cx->STAR2;
-  flag2 = flag2 << 16;
+    flag1 = I2Cx->STAR1;
+    flag2 = I2Cx->STAR2;
+    flag2 = flag2 << 16;
 
-  lastevent = (flag1 | flag2) & FLAG_Mask;
+    lastevent = (flag1 | flag2) & FLAG_Mask;
 
-  if ((lastevent & I2C_EVENT) == I2C_EVENT)
-   {
-    status = READY;
-   }
-  else
-   {
-    status = NoREADY;
-   }
+    if((lastevent & I2C_EVENT) == I2C_EVENT)
+    {
+        status = READY;
+    }
+    else
+    {
+        status = NoREADY;
+    }
 
-  return status;
- }
+    return status;
+}
 
 /*********************************************************************
  * @fn      I2C_GetLastEvent
@@ -773,17 +773,17 @@ ErrorStatus I2C_CheckEvent(I2C_TypeDef *I2Cx, uint32_t I2C_EVENT)
  * @return  none
  */
 uint32_t I2C_GetLastEvent(I2C_TypeDef *I2Cx)
- {
-  uint32_t lastevent = 0;
-  uint32_t flag1 = 0, flag2 = 0;
+{
+    uint32_t lastevent = 0;
+    uint32_t flag1 = 0, flag2 = 0;
 
-  flag1 = I2Cx->STAR1;
-  flag2 = I2Cx->STAR2;
-  flag2 = flag2 << 16;
-  lastevent = (flag1 | flag2) & FLAG_Mask;
+    flag1 = I2Cx->STAR1;
+    flag2 = I2Cx->STAR2;
+    flag2 = flag2 << 16;
+    lastevent = (flag1 | flag2) & FLAG_Mask;
 
-  return lastevent;
- }
+    return lastevent;
+}
 
 /*********************************************************************
  * @fn      I2C_GetFlagStatus
@@ -815,35 +815,35 @@ uint32_t I2C_GetLastEvent(I2C_TypeDef *I2Cx)
  * @return  FlagStatus - SET or RESET.
  */
 FlagStatus I2C_GetFlagStatus(I2C_TypeDef *I2Cx, uint32_t I2C_FLAG)
- {
-  FlagStatus bitstatus = RESET;
-  __IO uint32_t i2creg = 0, i2cxbase = 0;
+{
+    FlagStatus    bitstatus = RESET;
+    __IO uint32_t i2creg = 0, i2cxbase = 0;
 
-  i2cxbase = (uint32_t) I2Cx;
-  i2creg = I2C_FLAG >> 28;
-  I2C_FLAG &= FLAG_Mask;
+    i2cxbase = (uint32_t)I2Cx;
+    i2creg = I2C_FLAG >> 28;
+    I2C_FLAG &= FLAG_Mask;
 
-  if (i2creg != 0)
-   {
-    i2cxbase += 0x14;
-   }
-  else
-   {
-    I2C_FLAG = (uint32_t) (I2C_FLAG >> 16);
-    i2cxbase += 0x18;
-   }
+    if(i2creg != 0)
+    {
+        i2cxbase += 0x14;
+    }
+    else
+    {
+        I2C_FLAG = (uint32_t)(I2C_FLAG >> 16);
+        i2cxbase += 0x18;
+    }
 
-  if (((*(__IO uint32_t *) i2cxbase) & I2C_FLAG) != (uint32_t) RESET)
-   {
-    bitstatus = SET;
-   }
-  else
-   {
-    bitstatus = RESET;
-   }
+    if(((*(__IO uint32_t *)i2cxbase) & I2C_FLAG) != (uint32_t)RESET)
+    {
+        bitstatus = SET;
+    }
+    else
+    {
+        bitstatus = RESET;
+    }
 
-  return bitstatus;
- }
+    return bitstatus;
+}
 
 /*********************************************************************
  * @fn      I2C_ClearFlag
@@ -878,12 +878,12 @@ FlagStatus I2C_GetFlagStatus(I2C_TypeDef *I2Cx, uint32_t I2C_FLAG)
  * @return  none
  */
 void I2C_ClearFlag(I2C_TypeDef *I2Cx, uint32_t I2C_FLAG)
- {
-  uint32_t flagpos = 0;
+{
+    uint32_t flagpos = 0;
 
-  flagpos = I2C_FLAG & FLAG_Mask;
-  I2Cx->STAR1 = (uint16_t) ~flagpos;
- }
+    flagpos = I2C_FLAG & FLAG_Mask;
+    I2Cx->STAR1 = (uint16_t)~flagpos;
+}
 
 /*********************************************************************
  * @fn      I2C_GetITStatus
@@ -909,24 +909,24 @@ void I2C_ClearFlag(I2C_TypeDef *I2Cx, uint32_t I2C_FLAG)
  * @return  none
  */
 ITStatus I2C_GetITStatus(I2C_TypeDef *I2Cx, uint32_t I2C_IT)
- {
-  ITStatus bitstatus = RESET;
-  uint32_t enablestatus = 0;
+{
+    ITStatus bitstatus = RESET;
+    uint32_t enablestatus = 0;
 
-  enablestatus = (uint32_t) (((I2C_IT & ITEN_Mask) >> 16) & (I2Cx->CTLR2));
-  I2C_IT &= FLAG_Mask;
+    enablestatus = (uint32_t)(((I2C_IT & ITEN_Mask) >> 16) & (I2Cx->CTLR2));
+    I2C_IT &= FLAG_Mask;
 
-  if (((I2Cx->STAR1 & I2C_IT) != (uint32_t) RESET) && enablestatus)
-   {
-    bitstatus = SET;
-   }
-  else
-   {
-    bitstatus = RESET;
-   }
+    if(((I2Cx->STAR1 & I2C_IT) != (uint32_t)RESET) && enablestatus)
+    {
+        bitstatus = SET;
+    }
+    else
+    {
+        bitstatus = RESET;
+    }
 
-  return bitstatus;
- }
+    return bitstatus;
+}
 
 /*********************************************************************
  * @fn      I2C_ClearITPendingBit
@@ -960,10 +960,16 @@ ITStatus I2C_GetITStatus(I2C_TypeDef *I2Cx, uint32_t I2C_IT)
  * @return  none
  */
 void I2C_ClearITPendingBit(I2C_TypeDef *I2Cx, uint32_t I2C_IT)
- {
-  uint32_t flagpos = 0;
+{
+    uint32_t flagpos = 0;
 
-  flagpos = I2C_IT & FLAG_Mask;
-  I2Cx->STAR1 = (uint16_t) ~flagpos;
- }
+    flagpos = I2C_IT & FLAG_Mask;
+    I2Cx->STAR1 = (uint16_t)~flagpos;
+}
+
+
+
+
+
+
 
