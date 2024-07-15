@@ -71,6 +71,42 @@ static volatile bool _100ms_flag = 0;
 static volatile uint32_t _100ms = 0;
 //----------------------------------------------------------------------------------
 
+
+//----------------------------------------------------------------------------------
+  static void PD1_Enable(bool Ena)
+   {
+    static bool done = false;
+
+    if (Ena)
+     {
+      if (done) return;
+      else
+       {
+	GPIO_InitTypeDef GPIO_InitStructure = {0};
+	done = true;
+	GPIO_PinRemapConfig(GPIO_Remap_SDI_Disable, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+	GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
+	GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
+	GPIO_WriteBit(GPIOC, GPIO_Pin_5, (counter & 4));
+       }
+     }
+    else
+     if (done) return;
+     else
+      {
+       done = true;
+       //GPIO_PinRemapConfig(GPIO_Remap_SDI_Disable, DISABLE);
+       RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, DISABLE);
+      }
+   }
+//----------------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------------
 static void GPIO_INIT(void)
  {
@@ -475,7 +511,11 @@ void SysTick_Handler(void)
   //GPIO_WriteBit(GPIOD, GPIO_Pin_7, (_100ms & 1));
   if (btn)
    {
-    if (btn < 5) counter++;
+    if (btn < 5)
+     {
+      counter++;
+      if (counter == 1) PD1_Enable(true);
+     }
 
     GPIO_WriteBit(GPIOD, GPIO_Pin_0, (counter & 1));
     GPIO_WriteBit(GPIOD, GPIO_Pin_1, (counter & 2));
