@@ -20,10 +20,14 @@
   (GlobalState
     (FileView
       (Path "Design Resources")
-      (Path "Design Resources" ".\ch32v003f4p6_ewb.dsn")
-      (Path "Design Resources" ".\ch32v003f4p6_ewb.dsn" "CH32V003F4P6_EWB")
-      (Select "Design Resources" ".\ch32v003f4p6_ewb.dsn" "CH32V003F4P6_EWB"
-         "CH32V003F4P6_EWB"))
+      (Path "Design Resources"
+         "d:\projects\led\alex\ch32v003\test\schematic\ch32v003f4p6_ewb.dsn")
+      (Path "Design Resources"
+         "d:\projects\led\alex\ch32v003\test\schematic\ch32v003f4p6_ewb.dsn"
+         "CH32V003F4P6_EWB")
+      (Select "Design Resources"
+         "d:\projects\led\alex\ch32v003\test\schematic\ch32v003f4p6_ewb.dsn"
+         "CH32V003F4P6_EWB" "CH32V003F4P6_EWB"))
     (HierarchyView)
     (Doc
       (Type "COrCapturePMDoc")
@@ -34,8 +38,8 @@
       (Type "COrSchematicDoc")
       (Frame
         (Placement "44 0 1 -1 -1 -9 -38 64 1696 64 708")
-        (Scroll "583 296")
-        (Zoom "226")
+        (Scroll "0 0")
+        (Zoom "113")
         (Occurrence "/"))
       (Path "D:\PROJECTS\LED\ALEX\CH32V003\TEST\SCHEMATIC\CH32V003F4P6_EWB.DSN")
       (Schematic "CH32V003F4P6_EWB")

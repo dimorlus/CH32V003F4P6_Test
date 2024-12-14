@@ -19,7 +19,11 @@
   (PartMRUSelector)
   (GlobalState
     (FileView
-      (Path "Design Resources"))
+      (Path "Design Resources")
+      (Path "Design Resources" ".\ch32v003f4p6_test.dsn")
+      (Path "Design Resources" ".\ch32v003f4p6_test.dsn" "CH32V003F4P6_TEST")
+      (Select "Design Resources" ".\ch32v003f4p6_test.dsn" "CH32V003F4P6_TEST"
+         "CH32V003F4P6_TEST"))
     (HierarchyView)
     (Doc
       (Type "COrCapturePMDoc")
@@ -29,9 +33,9 @@
     (Doc
       (Type "COrSchematicDoc")
       (Frame
-        (Placement "44 0 1 -1 -1 -9 -38 0 1632 0 644")
-        (Scroll "200 644")
-        (Zoom "226")
+        (Placement "44 0 1 -1 -1 -9 -38 96 1728 96 740")
+        (Scroll "0 0")
+        (Zoom "113")
         (Occurrence "/"))
       (Path
          "D:\PROJECTS\LED\ALEX\CH32V003\TEST\SCHEMATIC\CH32V003F4P6_TEST.DSN")

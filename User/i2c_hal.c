@@ -377,7 +377,7 @@ uint8_t HAL_I2C_Mem_Read(I2C_TypeDef *i2c_periph, uint8_t DevAddress, uint8_t Me
    }
 
   /* send the restart signal */
-  I2C_GenerateSTOP(i2c_periph, ENABLE);
+  //I2C_GenerateSTOP(i2c_periph, ENABLE); //An extra command, it is not in the protocol.
   I2C_GenerateSTART( I2C1, ENABLE);
   while(!I2C_CheckEvent( I2C1, I2C_EVENT_MASTER_MODE_SELECT ) && (get_tick() - tickstart < i2c_timeout));
 
