@@ -177,9 +177,9 @@ static void adc_init(void)
   //                            +- port pin number dma_cntr.e. PD2
 
   // PC4 is analog input chl 7
-  GPIOD->CFGLR &= ~(0xf << (4 * 4));	// CNF = 00: Analog, MODE = 00: Input
+  GPIOC->CFGLR &= ~(0xf << (4 * 4));	// CNF = 00: Analog, MODE = 00: Input
   //                            ^
-  //                            +- port pin number dma_cntr.e. PD4
+  //                            +- port pin number dma_cntr.e. PC4
 
   // Reset the ADC to init all regs
   RCC->APB2PRSTR |= RCC_APB2Periph_ADC1;
